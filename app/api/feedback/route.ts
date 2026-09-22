@@ -3,7 +3,10 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { requireRole, requireSession } from '@/lib/guard'
 
-// GET /api/feedback — list feedback for the caller's workspace, paginated
+// GET /api/feedback — list feedback for the caller's workspace, paginated,
+// with search + filters. All query params are optional.
+//
+// Example: /api/feedback?page=1&search=onboarding&channel=Support+ticket&sentiment=NEG&status=NEW
 export async function GET(req: Request) {
   const auth = await requireSession()
   if (auth instanceof NextResponse) return auth
@@ -14,16 +17,41 @@ export async function GET(req: Request) {
   const pageSize = 20
   const skip = (page - 1) * pageSize
 
+  const search = searchParams.get('search')
+  const channel = searchParams.get('channel')
+  const sentiment = searchParams.get('sentiment') // POS | NEU | NEG
+  const status = searchParams.get('status') // NEW | REVIEWED | ACTIONED
+  const themeId = searchParams.get('themeId')
+  const dateFrom = searchParams.get('dateFrom') // ISO date string
+  const dateTo = searchParams.get('dateTo')
+
+  // Build the where-clause incrementally so filters are all optional.
+  const where: any = { workspaceId: session.user.workspaceId }
+
+  if (search) {
+    where.content = { contains: search, mode: 'insensitive' }
+  }
+  if (channel) where.channel = channel
+  if (sentiment) where.sentiment = sentiment
+  if (status) where.status = status
+  if (themeId) where.themes = { some: { themeId } }
+  if (dateFrom || dateTo) {
+    where.createdAt = {}
+    if (dateFrom) where.createdAt.gte = new Date(dateFrom)
+    if (dateTo) where.createdAt.lte = new Date(dateTo)
+  }
+
   const [items, total] = await Promise.all([
     db.feedback.findMany({
-      where: { workspaceId: session.user.workspaceId },
+      where,
       orderBy: { createdAt: 'desc' },
       skip,
       take: pageSize,
+      include: {
+        themes: { include: { theme: true } },
+      },
     }),
-    db.feedback.count({
-      where: { workspaceId: session.user.workspaceId },
-    }),
+    db.feedback.count({ where }),
   ])
 
   return NextResponse.json({
