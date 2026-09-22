@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+enum Sentiment {
+  POS
+  NEU
+  NEG
+}
+
+enum FeedbackStatus {
+  NEW
+  REVIEWED
+  ACTIONED
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users     User[]
+  feedback  Feedback[]
+  themes    Theme[]
+  reports   Report[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(VIEWER)
+  createdAt    DateTime @default(now())
+
+  workspaceId  String
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+
+  reports      Report[]  @relation("ReportGeneratedBy")
+
+  @@index([workspaceId])
+}
+
+model Feedback {
+  id            String         @id @default(cuid())
+  content       String
+  channel       String
+  sourceRef     String?
+  customerLabel String?
+  sentiment     Sentiment?
+  sentimentScore Float?
+  status        FeedbackStatus @default(NEW)
+  createdAt     DateTime       @default(now())
+
+  workspaceId   String
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id])
+
+  themes        FeedbackTheme[]
+  embedding     Embedding?
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, channel])
+  @@index([workspaceId, createdAt])
+}
+
+model Theme {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String?
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  feedback    FeedbackTheme[]
+
+  @@index([workspaceId])
+  @@unique([workspaceId, name])
+}
+
+model FeedbackTheme {
+  feedbackId String
+  themeId    String
+  confidence Float   @default(1.0)
+
+  feedback   Feedback @relation(fields: [feedbackId], references: [id])
+  theme      Theme    @relation(fields: [themeId], references: [id])
+
+  @@id([feedbackId, themeId])
+  @@index([themeId])
+}
+
+model Embedding {
+  id         String   @id @default(cuid())
+  feedbackId String   @unique
+  vector     Float[]
+
+  feedback   Feedback @relation(fields: [feedbackId], references: [id])
+}
+
+model Report {
+  id            String   @id @default(cuid())
+  title         String
+  periodStart   DateTime
+  periodEnd     DateTime
+  contentJson   Json
+  createdAt     DateTime @default(now())
+
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id])
+
+  generatedById String
+  generatedBy   User      @relation("ReportGeneratedBy", fields: [generatedById], references: [id])
+
+  @@index([workspaceId])
+}
