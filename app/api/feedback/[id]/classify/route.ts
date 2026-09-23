@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireRole } from '@/lib/guard'
-import { classifyFeedback } from '@/lib/ai'
+import { classifyFeedback, embedText } from '@/lib/ai'
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireRole(['ADMIN', 'ANALYST'])
@@ -57,6 +57,18 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       },
     })
   })
+
+  // Also generate + store the embedding, so Ask LOOP can find this item later.
+  try {
+    const vector = await embedText(feedback.content)
+    await db.embedding.upsert({
+      where: { feedbackId: feedback.id },
+      create: { feedbackId: feedback.id, vector },
+      update: { vector },
+    })
+  } catch (err) {
+    console.error('Embedding generation failed for feedback', feedback.id, err)
+  }
 
   return NextResponse.json({ feedback: updated, themes: themeRecords, rationale: result.rationale })
 }

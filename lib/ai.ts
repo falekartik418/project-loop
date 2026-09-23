@@ -83,3 +83,100 @@ export async function classifyFeedback(
 
   throw new Error('Classification failed after retry')
 }
+
+// --- Embeddings + Ask LOOP (retrieval-grounded Q&A) ---
+
+const EMBEDDING_MODEL = 'gemini-embedding-001'
+const EMBEDDING_URL = `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent`
+
+export async function embedText(text: string): Promise<number[]> {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
+
+  const res = await fetch(`${EMBEDDING_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      content: { parts: [{ text }] },
+    }),
+  })
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`Gemini embedding error ${res.status}: ${errText}`)
+  }
+
+  const data = await res.json()
+  const values = data?.embedding?.values
+  if (!Array.isArray(values)) throw new Error('Gemini returned no embedding values')
+  return values
+}
+
+export function cosineSimilarity(a: number[], b: number[]): number {
+  let dot = 0
+  let normA = 0
+  let normB = 0
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i]
+    normA += a[i] * a[i]
+    normB += b[i] * b[i]
+  }
+  if (normA === 0 || normB === 0) return 0
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB))
+}
+
+export interface GroundedAnswer {
+  answer: string
+  usedFeedbackIds: string[]
+}
+
+export async function answerFromFeedback(
+  question: string,
+  relevantItems: Array<{ id: string; content: string }>,
+): Promise<GroundedAnswer> {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
+
+  if (relevantItems.length === 0) {
+    return {
+      answer: "I couldn't find any feedback related to that question.",
+      usedFeedbackIds: [],
+    }
+  }
+
+  const context = relevantItems
+    .map((item, i) => `[${i + 1}] (id: ${item.id}) ${item.content}`)
+    .join('\n')
+
+  const prompt = `You are answering a question using ONLY the customer feedback provided below. Do not invent or assume anything not present in this feedback. If the feedback doesn't actually answer the question, say so honestly.
+
+Feedback items:
+${context}
+
+Question: ${question}
+
+Answer in 2-4 sentences, referencing specific feedback items by their [number] where relevant.`
+
+  const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.2 },
+    }),
+  })
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`Gemini API error ${res.status}: ${errText}`)
+  }
+
+  const data = await res.json()
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!text) throw new Error('Gemini returned no text content')
+
+  return {
+    answer: text.trim(),
+    usedFeedbackIds: relevantItems.map((item) => item.id),
+  }
+}
