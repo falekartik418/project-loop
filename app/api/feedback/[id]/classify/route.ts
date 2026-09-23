@@ -3,15 +3,14 @@ import { db } from '@/lib/db'
 import { requireRole } from '@/lib/guard'
 import { classifyFeedback } from '@/lib/ai'
 
-// POST /api/feedback/[id]/classify — runs AI classification on one item
-// and saves the result. Used both on ingest and for manual re-classify.
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireRole(['ADMIN', 'ANALYST'])
   if (auth instanceof NextResponse) return auth
   const { session } = auth
+  const { id } = await params
 
   const feedback = await db.feedback.findFirst({
-    where: { id: params.id, workspaceId: session.user.workspaceId },
+    where: { id, workspaceId: session.user.workspaceId },
   })
   if (!feedback) {
     return NextResponse.json({ error: 'Feedback not found' }, { status: 404 })
@@ -33,7 +32,6 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: 'Classification failed, try again' }, { status: 502 })
   }
 
-  // Match returned theme names to existing themes, or create new ones.
   const themeRecords = await Promise.all(
     result.themes.map(async (name) => {
       const existing = existingThemes.find((t) => t.name.toLowerCase() === name.toLowerCase())
