@@ -180,3 +180,50 @@ Answer in 2-4 sentences, referencing specific feedback items by their [number] w
     usedFeedbackIds: relevantItems.map((item) => item.id),
   }
 }
+
+// --- Voice-of-Customer report generation ---
+
+export interface ReportStats {
+  periodLabel: string
+  totalItems: number
+  sentimentBreakdown: { POS: number; NEU: number; NEG: number }
+  topThemes: Array<{ name: string; count: number }>
+  sampleQuotes: string[]
+}
+
+export async function generateReportNarrative(stats: ReportStats): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
+
+  const prompt = `Write a Voice-of-Customer report narrative for a product team, based ONLY on the
+real numbers and quotes below. Do not invent any statistics, themes, or quotes not listed here.
+
+Period: ${stats.periodLabel}
+Total feedback items: ${stats.totalItems}
+Sentiment breakdown: ${stats.sentimentBreakdown.POS} positive, ${stats.sentimentBreakdown.NEU} neutral, ${stats.sentimentBreakdown.NEG} negative
+Top themes: ${stats.topThemes.map((t) => `${t.name} (${t.count} items)`).join(', ') || 'none'}
+Sample verbatim quotes: ${stats.sampleQuotes.map((q) => `"${q}"`).join(' | ') || 'none'}
+
+Write a concise report (4-6 short paragraphs) covering: an executive summary, the top themes and what
+they mean, sentiment shifts, 1-2 notable verbatim quotes, and 2-3 recommended actions for the product
+team. Plain prose, no markdown headers needed. Sound like a product analyst, not a hype machine.`
+
+  const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.4 },
+    }),
+  })
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`Gemini API error ${res.status}: ${errText}`)
+  }
+
+  const data = await res.json()
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!text) throw new Error('Gemini returned no text content')
+  return text.trim()
+}
