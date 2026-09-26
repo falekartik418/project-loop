@@ -274,7 +274,13 @@ export default function FeedbackPage() {
                     <strong>{row.content.slice(0, 70)}{row.content.length > 70 ? '…' : ''}</strong>
                   </div>
                   <span>{row.channel}</span>
-                  <Tag className={(row.sentiment ?? 'neutral').toLowerCase()}>{row.sentiment ?? 'UNCLASSIFIED'}</Tag>
+                  <Tag
+  className={
+    row.sentiment === 'NEG' ? 'negative' : row.sentiment === 'POS' ? 'positive' : 'neutral'
+  }
+>
+    {row.sentiment === 'NEG' ? 'NEGATIVE' : row.sentiment === 'POS' ? 'POSITIVE' : row.sentiment === 'NEU' ? 'NEUTRAL' : 'UNCLASSIFIED'}
+</Tag>
                   <div className="theme-tags">
                     {row.themes.map((t) => (
                       <Tag key={t.theme.name}>{t.theme.name}</Tag>

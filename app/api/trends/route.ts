@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/guard'
 
-// GET /api/trends — theme volume over time, with spike detection vs the
-// previous period. ?days=N controls the window (default 30).
 export async function GET(req: Request) {
   const auth = await requireSession()
   if (auth instanceof NextResponse) return auth
@@ -19,7 +17,7 @@ export async function GET(req: Request) {
   const [currentLinks, previousLinks, allThemes] = await Promise.all([
     db.feedbackTheme.findMany({
       where: { feedback: { workspaceId, createdAt: { gte: currentStart } } },
-      include: { theme: true },
+      include: { theme: true, feedback: { select: { sentiment: true } } },
     }),
     db.feedbackTheme.findMany({
       where: {
@@ -30,12 +28,18 @@ export async function GET(req: Request) {
     db.theme.findMany({ where: { workspaceId } }),
   ])
 
-  const countByTheme = (links: typeof currentLinks) => {
+  const countByTheme = (links: typeof previousLinks) => {
     const counts: Record<string, number> = {}
     for (const link of links) {
       counts[link.themeId] = (counts[link.themeId] || 0) + 1
     }
     return counts
+  }
+
+  const sentimentByTheme: Record<string, { POS: number; NEU: number; NEG: number }> = {}
+  for (const link of currentLinks) {
+    if (!sentimentByTheme[link.themeId]) sentimentByTheme[link.themeId] = { POS: 0, NEU: 0, NEG: 0 }
+    if (link.feedback.sentiment) sentimentByTheme[link.themeId][link.feedback.sentiment]++
   }
 
   const currentCounts = countByTheme(currentLinks)
@@ -47,13 +51,22 @@ export async function GET(req: Request) {
     const changePercent =
       previous === 0 ? (current > 0 ? 100 : 0) : Math.round(((current - previous) / previous) * 100)
 
+    const sentiments = sentimentByTheme[theme.id] ?? { POS: 0, NEU: 0, NEG: 0 }
+    let dominantSentiment: 'POS' | 'NEU' | 'NEG' = 'NEU'
+    if (sentiments.NEG >= sentiments.POS && sentiments.NEG >= sentiments.NEU && sentiments.NEG > 0) {
+      dominantSentiment = 'NEG'
+    } else if (sentiments.POS >= sentiments.NEU && sentiments.POS > 0) {
+      dominantSentiment = 'POS'
+    }
+
     return {
       themeId: theme.id,
       themeName: theme.name,
       currentCount: current,
       previousCount: previous,
       changePercent,
-      isSpiking: changePercent >= 50 && current >= 3, // simple spike rule
+      isSpiking: changePercent >= 50 && current >= 3,
+      dominantSentiment,
     }
   })
 

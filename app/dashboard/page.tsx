@@ -44,6 +44,7 @@ interface Trend {
   previousCount: number
   changePercent: number
   isSpiking: boolean
+  dominantSentiment: 'POS' | 'NEU' | 'NEG'
 }
 
 interface FeedbackItem {
@@ -324,10 +325,16 @@ export default function DashboardPage() {
                       <strong>{t.themeName}</strong>
                       <small>{t.currentCount} mentions</small>
                     </div>
-                    <span>
+                                       <span>
                       {t.changePercent >= 0 ? '↑' : '↓'} {Math.abs(t.changePercent)}%
                     </span>
-                    <Tag className={t.isSpiking ? 'negative' : 'neutral'}>{t.isSpiking ? 'SPIKING' : 'STABLE'}</Tag>
+                    <Tag
+                      className={
+                        t.dominantSentiment === 'NEG' ? 'negative' : t.dominantSentiment === 'POS' ? 'positive' : 'neutral'
+                      }
+                    >
+                      {t.dominantSentiment === 'NEG' ? 'NEGATIVE' : t.dominantSentiment === 'POS' ? 'POSITIVE' : 'NEUTRAL'}
+                    </Tag>
                   </div>
                 ))}
               </div>
@@ -372,9 +379,21 @@ export default function DashboardPage() {
                     {row.content.length > 60 ? '…' : ''}
                   </span>
                   <span>{row.channel}</span>
-                  <Tag className={(row.sentiment ?? 'neutral').toLowerCase()}>{row.sentiment ?? 'UNCLASSIFIED'}</Tag>
+                  <Tag
+  className={
+    row.sentiment === 'NEG' ? 'negative' : row.sentiment === 'POS' ? 'positive' : 'neutral'
+  }
+>
+    {row.sentiment === 'NEG' ? 'NEGATIVE' : row.sentiment === 'POS' ? 'POSITIVE' : row.sentiment === 'NEU' ? 'NEUTRAL' : 'UNCLASSIFIED'}
+</Tag>
                   <span>{row.themes[0]?.theme.name ?? '—'}</span>
-                  <Tag className="status-tag">{row.status}</Tag>
+                  <Tag
+  className={
+    row.status === 'ACTIONED' ? 'status-actioned' : row.status === 'REVIEWED' ? 'status-reviewed' : 'status-new'
+  }
+>
+  {row.status}
+</Tag>
                   <span>{new Date(row.createdAt).toLocaleDateString()}</span>
                 </div>
               ))}

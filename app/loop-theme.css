@@ -132,3 +132,24 @@ body.dark-mode .panel-heading h3,
 body.dark-mode .recent-heading h3,
 body.dark-mode h2,
 body.dark-mode h3 { color: #f0f3ff; }
+
+/* Stronger sentiment tag colors, dark mode */
+body.dark-mode .negative { background: #4a1420; border-color: #8a2b3f; color: #ff8fa3; }
+body.dark-mode .positive { background: #0f3320; border-color: #1f6b41; color: #6ee7a0; }
+body.dark-mode .neutral { background: #ffffff; border-color: #d6e0eb; color: #1a2436; }
+
+/* Same, light mode (a bit stronger than the original pale versions) */
+.negative { background: #ffe3e6; border-color: #f5a3ac; color: #b3202e; }
+.positive { background: #dcf7ec; border-color: #7cd9b3; color: #0a7a4f; }
+.neutral { background: #ffffff; border-color: #d6e0eb; color: #35455f; }
+
+
+/* Status tag colors, light mode */
+.status-new { background: #f2f4ff; border-color: #aebaff; color: #4d5eff; }
+.status-reviewed { background: #fff8e6; border-color: #f0c766; color: #a8760a; }
+.status-actioned { background: #e9fbf3; border-color: #7cd9b3; color: #0a7a4f; }
+
+/* Status tag colors, dark mode */
+body.dark-mode .status-new { background: #1f2450; border-color: #3a3f80; color: #9aa0ff; }
+body.dark-mode .status-reviewed { background: #3a2f0f; border-color: #7a5f1f; color: #f0c766; }
+body.dark-mode .status-actioned { background: #0f3320; border-color: #1f6b41; color: #6ee7a0; }
