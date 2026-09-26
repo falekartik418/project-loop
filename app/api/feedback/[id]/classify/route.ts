@@ -49,11 +49,12 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         }),
       ),
     )
-    return tx.feedback.update({
+        return tx.feedback.update({
       where: { id: feedback.id },
       data: {
         sentiment: result.sentiment,
         sentimentScore: result.sentimentScore,
+        featureArea: result.featureArea,
       },
     })
   })

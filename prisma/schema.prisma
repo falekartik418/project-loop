@@ -58,6 +58,7 @@ model Feedback {
   channel       String
   sourceRef     String?
   customerLabel String?
+  featureArea   String?
   sentiment     Sentiment?
   sentimentScore Float?
   status        FeedbackStatus @default(NEW)
