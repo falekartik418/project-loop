@@ -31,9 +31,18 @@ function Mark() {
 
 interface InsightsData {
   statCards: { totalItems: number; percentNegative: number; newThisWeek: number }
-  volumeOverTime: Array<{ date: string; count: number }>
+  volumeOverTime: Array<{ date: string; total: number; positive: number; negative: number }>
   sentimentBreakdown: { POS: number; NEU: number; NEG: number; unclassified: number }
   topThemes: Array<{ name: string; count: number }>
+}
+
+interface Trend {
+  themeId: string
+  themeName: string
+  currentCount: number
+  previousCount: number
+  changePercent: number
+  isSpiking: boolean
 }
 
 interface FeedbackItem {
@@ -46,10 +55,25 @@ interface FeedbackItem {
   themes: Array<{ theme: { name: string } }>
 }
 
+function buildLinePath(values: number[], max: number): string {
+  if (values.length === 0) return ''
+  const w = 700
+  const h = 190
+  const step = values.length > 1 ? w / (values.length - 1) : 0
+  return values
+    .map((v, i) => {
+      const x = i * step
+      const y = max > 0 ? h - (v / max) * h : h
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`
+    })
+    .join(' ')
+}
+
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [insights, setInsights] = useState<InsightsData | null>(null)
+  const [trends, setTrends] = useState<Trend[]>([])
   const [recentFeedback, setRecentFeedback] = useState<FeedbackItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -64,14 +88,17 @@ export default function DashboardPage() {
 
     async function load() {
       setLoading(true)
-      const [insightsRes, feedbackRes] = await Promise.all([
+      const [insightsRes, feedbackRes, trendsRes] = await Promise.all([
         fetch('/api/insights'),
         fetch('/api/feedback?page=1'),
+        fetch('/api/trends'),
       ])
       const insightsData = await insightsRes.json()
       const feedbackData = await feedbackRes.json()
+      const trendsData = await trendsRes.json()
       setInsights(insightsData)
       setRecentFeedback(feedbackData.items.slice(0, 6))
+      setTrends((trendsData.trends ?? []).slice(0, 4))
       setLoading(false)
     }
     load()
@@ -84,6 +111,18 @@ export default function DashboardPage() {
   const totalSentiment = insights
     ? insights.sentimentBreakdown.POS + insights.sentimentBreakdown.NEU + insights.sentimentBreakdown.NEG
     : 0
+
+  const volume = insights?.volumeOverTime ?? []
+  const maxVolume = Math.max(1, ...volume.map((v) => v.total))
+  const totalPath = buildLinePath(volume.map((v) => v.total), maxVolume)
+  const posPath = buildLinePath(volume.map((v) => v.positive), maxVolume)
+  const negPath = buildLinePath(volume.map((v) => v.negative), maxVolume)
+
+  const posPct = totalSentiment ? Math.round(((insights?.sentimentBreakdown.POS ?? 0) / totalSentiment) * 100) : 0
+  const neuPct = totalSentiment ? Math.round(((insights?.sentimentBreakdown.NEU ?? 0) / totalSentiment) * 100) : 0
+  const negPct = 100 - posPct - neuPct
+
+  const topSpike = trends.find((t) => t.isSpiking)
 
   return (
     <div className="app-shell">
@@ -158,6 +197,7 @@ export default function DashboardPage() {
               <Button icon={<FilterOutlined />}>Filters</Button>
             </div>
           </div>
+
           <div className="kpi-grid">
             <Card>
               <small>
@@ -182,49 +222,132 @@ export default function DashboardPage() {
             </Card>
           </div>
 
+          <div className="chart-grid">
+            <Card className="volume-card">
+              <div className="panel-heading">
+                <div>
+                  <h3>Feedback Volume</h3>
+                  <p>Last {volume.length} days with activity</p>
+                </div>
+                <div className="legend">
+                  <span className="total-dot" /> Total <span className="positive-dot" /> Positive{' '}
+                  <span className="negative-dot" /> Negative
+                </div>
+              </div>
+              <div className="line-chart">
+                <div className="y-labels">
+                  <span>{maxVolume}</span>
+                  <span>{Math.round(maxVolume * 0.75)}</span>
+                  <span>{Math.round(maxVolume * 0.5)}</span>
+                  <span>{Math.round(maxVolume * 0.25)}</span>
+                  <span>0</span>
+                </div>
+                <svg viewBox="0 0 700 190" preserveAspectRatio="none">
+                  <path className="total-line" d={totalPath} />
+                  <path className="positive-line" d={posPath} />
+                  <path className="negative-line" d={negPath} />
+                </svg>
+                <div className="x-labels">
+                  {volume
+                    .filter((_, i) => i % Math.ceil(volume.length / 8 || 1) === 0)
+                    .map((v) => (
+                      <span key={v.date}>{new Date(v.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                    ))}
+                </div>
+              </div>
+            </Card>
+            <Card className="sentiment-card">
+              <div className="panel-heading">
+                <div>
+                  <h3>Sentiment</h3>
+                </div>
+              </div>
+              <div
+                className="donut"
+                style={{
+                  background: `conic-gradient(#09b983 0 ${posPct}%, #9eafc6 ${posPct}% ${posPct + neuPct}%, #ff535b ${posPct + neuPct}% 100%)`,
+                }}
+              >
+                <div>
+                  {totalSentiment}
+                  <br />
+                  <small>total</small>
+                </div>
+              </div>
+              <div className="sentiment-legend">
+                <span>
+                  <i className="positive-dot" /> Positive{' '}
+                  <b>
+                    {insights?.sentimentBreakdown.POS ?? 0} <em>{posPct}%</em>
+                  </b>
+                </span>
+                <span>
+                  <i className="neutral-dot" /> Neutral{' '}
+                  <b>
+                    {insights?.sentimentBreakdown.NEU ?? 0} <em>{neuPct}%</em>
+                  </b>
+                </span>
+                <span>
+                  <i className="negative-dot" /> Negative{' '}
+                  <b>
+                    {insights?.sentimentBreakdown.NEG ?? 0} <em>{negPct}%</em>
+                  </b>
+                </span>
+              </div>
+            </Card>
+          </div>
+
           <div className="lower-grid">
             <Card>
               <div className="panel-heading">
                 <h3>Top Themes</h3>
               </div>
               <div className="bar-chart">
-                {(insights?.topThemes ?? []).map((t) => (
+                {(insights?.topThemes ?? []).slice(0, 5).map((t) => (
                   <div key={t.name}>
                     <span>{t.name}</span>
-                    <b style={{ width: `${Math.min(100, t.count * 2)}%` }} />
+                    <b style={{ width: `${Math.min(100, t.count * 4)}%` }} />
                   </div>
                 ))}
               </div>
             </Card>
             <Card>
               <div className="panel-heading">
-                <h3>Sentiment breakdown</h3>
+                <h3>Trending Themes</h3>
               </div>
-              <div className="sentiment-legend">
-                <span>
-                  <i className="positive-dot" /> Positive{' '}
-                  <b>
-                    {insights?.sentimentBreakdown.POS ?? 0}{' '}
-                    <em>{totalSentiment ? Math.round(((insights?.sentimentBreakdown.POS ?? 0) / totalSentiment) * 100) : 0}%</em>
-                  </b>
-                </span>
-                <span>
-                  <i className="neutral-dot" /> Neutral{' '}
-                  <b>
-                    {insights?.sentimentBreakdown.NEU ?? 0}{' '}
-                    <em>{totalSentiment ? Math.round(((insights?.sentimentBreakdown.NEU ?? 0) / totalSentiment) * 100) : 0}%</em>
-                  </b>
-                </span>
-                <span>
-                  <i className="negative-dot" /> Negative{' '}
-                  <b>
-                    {insights?.sentimentBreakdown.NEG ?? 0}{' '}
-                    <em>{totalSentiment ? Math.round(((insights?.sentimentBreakdown.NEG ?? 0) / totalSentiment) * 100) : 0}%</em>
-                  </b>
-                </span>
+              <div className="trending-list">
+                {trends.map((t) => (
+                  <div key={t.themeId}>
+                    <div>
+                      <strong>{t.themeName}</strong>
+                      <small>{t.currentCount} mentions</small>
+                    </div>
+                    <span>
+                      {t.changePercent >= 0 ? '↑' : '↓'} {Math.abs(t.changePercent)}%
+                    </span>
+                    <Tag className={t.isSpiking ? 'negative' : 'neutral'}>{t.isSpiking ? 'SPIKING' : 'STABLE'}</Tag>
+                  </div>
+                ))}
               </div>
             </Card>
           </div>
+
+          {topSpike && (
+            <div className="insight-banner">
+              <div className="insight-icon">✣</div>
+              <div>
+                <strong>LOOP AI INSIGHT</strong>
+                <p>
+                  <b>{topSpike.themeName}</b> complaints increased <b>{topSpike.changePercent}%</b> this period, now
+                  at {topSpike.currentCount} mentions, up from {topSpike.previousCount} in the prior period.
+                </p>
+                <small>Based on {topSpike.currentCount} feedback items · Updated just now</small>
+              </div>
+              <Link href="/feedback">
+                <Button>View feedback</Button>
+              </Link>
+            </div>
+          )}
 
           <Card className="recent-card">
             <div className="recent-heading">
@@ -242,7 +365,10 @@ export default function DashboardPage() {
               </div>
               {recentFeedback.map((row) => (
                 <div className="table-row" key={row.id}>
-                  <span>{row.content.slice(0, 60)}{row.content.length > 60 ? '…' : ''}</span>
+                  <span>
+                    {row.content.slice(0, 60)}
+                    {row.content.length > 60 ? '…' : ''}
+                  </span>
                   <span>{row.channel}</span>
                   <Tag className={(row.sentiment ?? 'neutral').toLowerCase()}>{row.sentiment ?? 'UNCLASSIFIED'}</Tag>
                   <span>{row.themes[0]?.theme.name ?? '—'}</span>

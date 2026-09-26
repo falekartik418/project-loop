@@ -2,9 +2,6 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/guard'
 
-// GET /api/insights — stats for the dashboard: totals, sentiment breakdown,
-// volume over time, and top themes. Accepts optional ?days=N (default 30)
-// to control the time window.
 export async function GET(req: Request) {
   const auth = await requireSession()
   if (auth instanceof NextResponse) return auth
@@ -31,24 +28,24 @@ export async function GET(req: Request) {
     }),
   ])
 
-  // Volume over time: bucket by day
-  const volumeByDay: Record<string, number> = {}
+  const volumeByDay: Record<string, { total: number; positive: number; negative: number }> = {}
   for (const item of allInWindow) {
     const day = item.createdAt.toISOString().slice(0, 10)
-    volumeByDay[day] = (volumeByDay[day] || 0) + 1
+    if (!volumeByDay[day]) volumeByDay[day] = { total: 0, positive: 0, negative: 0 }
+    volumeByDay[day].total++
+    if (item.sentiment === 'POS') volumeByDay[day].positive++
+    if (item.sentiment === 'NEG') volumeByDay[day].negative++
   }
   const volumeOverTime = Object.entries(volumeByDay)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, count]) => ({ date, count }))
+    .map(([date, counts]) => ({ date, ...counts }))
 
-  // Sentiment breakdown
   const sentimentBreakdown = { POS: 0, NEU: 0, NEG: 0, unclassified: 0 }
   for (const item of allInWindow) {
     if (item.sentiment) sentimentBreakdown[item.sentiment]++
     else sentimentBreakdown.unclassified++
   }
 
-  // Top themes by count
   const themeCounts: Record<string, { name: string; count: number }> = {}
   for (const link of themeLinks) {
     const key = link.theme.id
