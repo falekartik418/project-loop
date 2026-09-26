@@ -19,6 +19,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { Button, Card, Tag } from 'antd'
+import { useThemeMode } from '../theme-provider'
 
 function Mark() {
   return (
@@ -71,6 +72,7 @@ function buildLinePath(values: number[], max: number): string {
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
+  const { dark, toggle } = useThemeMode()
   const router = useRouter()
   const [insights, setInsights] = useState<InsightsData | null>(null)
   const [trends, setTrends] = useState<Trend[]>([])
@@ -183,7 +185,7 @@ export default function DashboardPage() {
           </div>
           <div className="top-actions">
             <BellOutlined />
-            <MoonOutlined />
+            <MoonOutlined onClick={toggle} style={{ cursor: 'pointer', color: dark ? '#a29bfe' : undefined }} />
             <span className="avatar">{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
           </div>
         </header>

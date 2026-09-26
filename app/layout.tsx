@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./loop-theme.css";
 import { Providers } from "./providers";
+import { ThemeModeProvider } from "./theme-provider";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 
 const geistSans = Geist({
@@ -28,7 +29,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <AntdRegistry>
-          <Providers>{children}</Providers>
+          <ThemeModeProvider>
+            <Providers>{children}</Providers>
+          </ThemeModeProvider>
         </AntdRegistry>
       </body>
     </html>
