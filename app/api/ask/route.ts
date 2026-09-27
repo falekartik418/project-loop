@@ -42,18 +42,18 @@ export async function POST(req: Request) {
   }
 
   const ranked = embedded
-    .map((e) => ({
+    .map((e: any) => ({
       feedback: e.feedback,
       similarity: cosineSimilarity(questionVector, e.vector),
     }))
-    .sort((a, b) => b.similarity - a.similarity)
+    .sort((a: any, b: any) => b.similarity - a.similarity)
     .slice(0, TOP_K)
 
   let result
   try {
     result = await answerFromFeedback(
       parsed.data.question,
-      ranked.map((r) => ({ id: r.feedback.id, content: r.feedback.content })),
+      ranked.map((r: any) => ({ id: r.feedback.id, content: r.feedback.content }))
     )
   } catch (err) {
     console.error('Ask LOOP answer generation failed', err)
@@ -61,8 +61,8 @@ export async function POST(req: Request) {
   }
 
   const usedFeedback = ranked
-    .filter((r) => result.usedFeedbackIds.includes(r.feedback.id))
-    .map((r) => ({
+    .filter((r: any) => result.usedFeedbackIds.includes(r.feedback.id))
+    .map((r: any) => ({
       id: r.feedback.id,
       content: r.feedback.content,
       channel: r.feedback.channel,
