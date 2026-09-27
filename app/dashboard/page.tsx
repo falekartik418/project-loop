@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { Topbar } from '@/components/Topbar'
 import {
   BarChartOutlined,
   BellOutlined,
@@ -179,17 +180,7 @@ export default function DashboardPage() {
         </div>
       </aside>
       <div className="app-main">
-        <header className="app-topbar">
-          <div className="search-box">
-            <SearchOutlined /> <span>Search LOOP...</span>
-            <kbd>⌘K</kbd>
-          </div>
-          <div className="top-actions">
-            <BellOutlined />
-            <MoonOutlined onClick={toggle} style={{ cursor: 'pointer', color: dark ? '#a29bfe' : undefined }} />
-            <span className="avatar">{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
-          </div>
-        </header>
+        <Topbar />
         <main className="overview-content">
           <div className="overview-heading">
             <div>

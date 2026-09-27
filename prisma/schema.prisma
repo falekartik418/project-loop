@@ -34,6 +34,7 @@ model Workspace {
   feedback  Feedback[]
   themes    Theme[]
   reports   Report[]
+  notifications Notification[]
 }
 
 model User {
@@ -126,4 +127,14 @@ model Report {
   generatedBy   User      @relation("ReportGeneratedBy", fields: [generatedById], references: [id])
 
   @@index([workspaceId])
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  message     String
+  href        String
+  read        Boolean   @default(false)
+  createdAt   DateTime  @default(now())
 }
