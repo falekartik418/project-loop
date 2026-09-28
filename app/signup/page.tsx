@@ -72,7 +72,7 @@ export default function SetupPage() {
         current={step}
         items={[{ title: 'Create account' }, { title: 'Your workspace' }, { title: 'All set' }]}
       />
-      <Card className="setup-card" bordered={false}>
+     <Card className="setup-card" variant="borderless">
         {step === 0 && (
           <>
             <h2>Create your account</h2>

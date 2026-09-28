@@ -60,7 +60,7 @@ export default function LoginPage() {
         </div>
       </section>
       <section className="login-panel">
-        <Card className="login-card" bordered={false}>
+       <Card className="login-card" variant="borderless">
           <h2>Welcome back</h2>
           <p className="login-subtitle">Sign in to your workspace.</p>
           <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
