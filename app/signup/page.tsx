@@ -82,10 +82,11 @@ export default function SetupPage() {
                 <Input placeholder="Alex Rivera" />
               </Form.Item>
               <Form.Item
-                label="Work email"
-                name="email"
-                rules={[{ required: true, type: 'email', message: 'Enter a valid email.' }]}
-              >
+              label="Email"
+              name="email"
+              normalize={(value) => (typeof value === 'string' ? value.trim() : value)}
+              rules={[{ required: true, type: 'email', message: 'Enter a valid email address.' }]}
+            >
                 <Input placeholder="you@company.com" />
               </Form.Item>
               <Form.Item

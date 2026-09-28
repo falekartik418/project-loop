@@ -64,9 +64,10 @@ export default function LoginPage() {
           <h2>Welcome back</h2>
           <p className="login-subtitle">Sign in to your workspace.</p>
           <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
-            <Form.Item
+                        <Form.Item
               label="Email"
               name="email"
+              normalize={(value) => (typeof value === 'string' ? value.trim() : value)}
               rules={[{ required: true, type: 'email', message: 'Enter a valid email address.' }]}
             >
               <Input size="large" placeholder="you@company.com" />
