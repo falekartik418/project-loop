@@ -4,7 +4,7 @@ import { useThemeMode } from '@/app/theme-provider'
 import { useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { BellOutlined, MoonOutlined, SunOutlined, SearchOutlined } from '@ant-design/icons'
-
+import Link from 'next/link'
 
 interface SearchResult {
   id: string
@@ -115,7 +115,11 @@ export function Topbar() {
 ) : (
   <MoonOutlined onClick={toggle} style={{ cursor: 'pointer' }} />
 )}
-        <span className="avatar">{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
+       <Link href="/profile">
+  <span className="avatar" style={{ cursor: 'pointer' }}>
+    {session?.user?.name?.slice(0, 2).toUpperCase()}
+  </span>
+    </Link>
       </div>
 
       {searchOpen && (

@@ -90,9 +90,11 @@ export default function TrendsPage() {
           <button>
             <DatabaseOutlined /> Workspace
           </button>
-          <button>
-            <UserOutlined /> Members
-          </button>
+            <Link href="/members">
+            <button>
+              <UserOutlined /> Members
+            </button>
+          </Link>
           <button>
             <SettingOutlined /> Settings
           </button>

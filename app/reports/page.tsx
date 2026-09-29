@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { LogoutOutlined } from '@ant-design/icons'
 import {
   BarChartOutlined,
   DatabaseOutlined,
@@ -113,9 +114,11 @@ export default function ReportsPage() {
         </nav>
         <div className="workspace-label">WORKSPACE</div>
         <nav className="app-nav secondary">
-          <button>
-            <DatabaseOutlined /> Workspace
-          </button>
+        <Link href="/members">
+            <button>
+              <UserOutlined /> Members
+            </button>
+          </Link>
           <button>
             <UserOutlined /> Members
           </button>
@@ -123,13 +126,20 @@ export default function ReportsPage() {
             <SettingOutlined /> Settings
           </button>
         </nav>
-        <div className="user-switch" onClick={() => signOut({ callbackUrl: '/login' })} style={{ cursor: 'pointer' }}>
-          <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
-          <div>
-            <strong>{session?.user?.name}</strong>
-            <small>{session?.user?.role}</small>
-          </div>
-        </div>
+        <div className="user-switch">
+  <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
+    <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
+    <div>
+      <strong>{session?.user?.name}</strong>
+      <small>{session?.user?.role}</small>
+    </div>
+  </Link>
+  <LogoutOutlined
+    onClick={() => signOut({ callbackUrl: '/login' })}
+    style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
+    title="Log out"
+  />
+</div>
       </aside>
       <div className="app-main">
         <header className="app-topbar">

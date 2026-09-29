@@ -46,13 +46,14 @@ model User {
   createdAt    DateTime @default(now())
 
   workspaceId  String
-  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   reports      Report[]  @relation("ReportGeneratedBy")
 
+  emailNotifications Boolean @default(true)
+
   @@index([workspaceId])
 }
-
 model Feedback {
   id            String         @id @default(cuid())
   content       String
@@ -66,7 +67,7 @@ model Feedback {
   createdAt     DateTime       @default(now())
 
   workspaceId   String
-  workspace     Workspace      @relation(fields: [workspaceId], references: [id])
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   themes        FeedbackTheme[]
   embedding     Embedding?
@@ -76,7 +77,6 @@ model Feedback {
   @@index([workspaceId, channel])
   @@index([workspaceId, createdAt])
 }
-
 model Theme {
   id          String   @id @default(cuid())
   name        String
@@ -84,7 +84,7 @@ model Theme {
   color       String?
 
   workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   feedback    FeedbackTheme[]
 
@@ -97,8 +97,8 @@ model FeedbackTheme {
   themeId    String
   confidence Float   @default(1.0)
 
-  feedback   Feedback @relation(fields: [feedbackId], references: [id])
-  theme      Theme    @relation(fields: [themeId], references: [id])
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  theme      Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
 
   @@id([feedbackId, themeId])
   @@index([themeId])
@@ -109,9 +109,8 @@ model Embedding {
   feedbackId String   @unique
   vector     Float[]
 
-  feedback   Feedback @relation(fields: [feedbackId], references: [id])
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
 }
-
 model Report {
   id            String   @id @default(cuid())
   title         String
@@ -121,18 +120,17 @@ model Report {
   createdAt     DateTime @default(now())
 
   workspaceId   String
-  workspace     Workspace @relation(fields: [workspaceId], references: [id])
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   generatedById String
-  generatedBy   User      @relation("ReportGeneratedBy", fields: [generatedById], references: [id])
+  generatedBy   User      @relation("ReportGeneratedBy", fields: [generatedById], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
 }
-
 model Notification {
   id          String    @id @default(cuid())
   workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   message     String
   href        String
   read        Boolean   @default(false)

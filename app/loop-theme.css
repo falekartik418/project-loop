@@ -153,3 +153,4 @@ body.dark-mode .neutral { background: #ffffff; border-color: #d6e0eb; color: #1a
 body.dark-mode .status-new { background: #1f2450; border-color: #3a3f80; color: #9aa0ff; }
 body.dark-mode .status-reviewed { background: #3a2f0f; border-color: #7a5f1f; color: #f0c766; }
 body.dark-mode .status-actioned { background: #0f3320; border-color: #1f6b41; color: #6ee7a0; }
+.user-switch { justify-content: space-between; }
