@@ -6,7 +6,7 @@
 // Results are always restricted to the user's workspace.
 
 import { db } from '@/lib/db'
-import { generateEmbedding } from '@/lib/embeddings'
+import { embedText, cosineSimilarity } from '@/lib/ai'
 
 export type SearchResult = {
   id: string
@@ -17,28 +17,6 @@ export type SearchResult = {
   sentimentScore: number | null
   createdAt: Date
   similarity: number
-}
-
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length) {
-    throw new Error('Embedding dimensions do not match')
-  }
-
-  let dotProduct = 0
-  let magnitudeA = 0
-  let magnitudeB = 0
-
-  for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i]
-    magnitudeA += a[i] * a[i]
-    magnitudeB += b[i] * b[i]
-  }
-
-  if (magnitudeA === 0 || magnitudeB === 0) {
-    return 0
-  }
-
-  return dotProduct / (Math.sqrt(magnitudeA) * Math.sqrt(magnitudeB))
 }
 
 export async function semanticSearch(
@@ -52,7 +30,7 @@ export async function semanticSearch(
     throw new Error('Search question cannot be empty')
   }
 
-  const questionEmbedding = await generateEmbedding(cleanedQuestion)
+  const questionEmbedding = await embedText(cleanedQuestion)
 
   const feedbackWithEmbeddings = await db.feedback.findMany({
     where: {
