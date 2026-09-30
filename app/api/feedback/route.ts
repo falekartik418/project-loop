@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { requireRole, requireSession } from '@/lib/guard'
+import { classifyFeedback, embedText } from '@/lib/ai'
 
 // GET /api/feedback — list feedback for the caller's workspace, paginated,
 // with search + filters. All query params are optional.
@@ -90,5 +91,65 @@ export async function POST(req: Request) {
     },
   })
 
-  return NextResponse.json({ feedback }, { status: 201 })
+  // Classify immediately, same pattern as the manual re-classify route.
+  // If this fails, the item stays created but UNCLASSIFIED — recoverable
+  // later via the manual re-classify action.
+  try {
+    const existingThemes = await db.theme.findMany({
+      where: { workspaceId: session.user.workspaceId },
+      select: { id: true, name: true },
+    })
+
+    const result = await classifyFeedback(
+      feedback.content,
+      existingThemes.map((t) => t.name),
+    )
+
+    const themeRecords = await Promise.all(
+      result.themes.map(async (name) => {
+        const existing = existingThemes.find((t) => t.name.toLowerCase() === name.toLowerCase())
+        if (existing) return existing
+        return db.theme.create({ data: { name, workspaceId: session.user.workspaceId } })
+      }),
+    )
+
+    await db.$transaction(async (tx) => {
+      await Promise.all(
+        themeRecords.map((theme) =>
+          tx.feedbackTheme.create({
+            data: { feedbackId: feedback.id, themeId: theme.id, confidence: 0.8 },
+          }),
+        ),
+      )
+      await tx.feedback.update({
+        where: { id: feedback.id },
+        data: {
+          sentiment: result.sentiment,
+          sentimentScore: result.sentimentScore,
+          featureArea: result.featureArea,
+        },
+      })
+    })
+
+    // Also generate the embedding, so Ask LOOP can find this item later.
+    try {
+      const vector = await embedText(feedback.content)
+      await db.embedding.upsert({
+        where: { feedbackId: feedback.id },
+        create: { feedbackId: feedback.id, vector },
+        update: { vector },
+      })
+    } catch (embedError) {
+      console.error('Embedding failed for feedback', feedback.id, embedError)
+    }
+  } catch (classifyError) {
+    console.error('Classification failed for feedback', feedback.id, classifyError)
+  }
+
+  const updatedFeedback = await db.feedback.findUnique({
+    where: { id: feedback.id },
+    include: { themes: { include: { theme: true } } },
+  })
+
+  return NextResponse.json({ feedback: updatedFeedback }, { status: 201 })
 }

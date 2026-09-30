@@ -20,8 +20,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
   }
 
-  // Confirm the item belongs to this workspace before touching it —
-  // same tenant-isolation check pattern as everywhere else.
   const existing = await db.feedback.findFirst({
     where: { id, workspaceId: session.user.workspaceId },
   })
@@ -35,4 +33,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   })
 
   return NextResponse.json({ feedback: updated })
+}
+
+// DELETE /api/feedback/[id] — permanently remove a feedback item
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireRole(['ADMIN', 'ANALYST'])
+  if (auth instanceof NextResponse) return auth
+  const { session } = auth
+  const { id } = await params
+
+  const existing = await db.feedback.findFirst({
+    where: { id, workspaceId: session.user.workspaceId },
+  })
+  if (!existing) {
+    return NextResponse.json({ error: 'Feedback not found' }, { status: 404 })
+  }
+
+  // Clean up related rows first (theme links, embedding) before the feedback itself.
+  await db.feedbackTheme.deleteMany({ where: { feedbackId: id } })
+  await db.embedding.deleteMany({ where: { feedbackId: id } })
+  await db.feedback.delete({ where: { id } })
+
+  return NextResponse.json({ ok: true })
 }

@@ -79,12 +79,17 @@ export default function FeedbackPage() {
     load()
   }, [load])
 
-  const updateStatus = async (id: string, newStatus: string) => {
+   const updateStatus = async (id: string, newStatus: string) => {
     await fetch(`/api/feedback/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
     })
+    load()
+  }
+
+  const deleteFeedback = async (id: string) => {
+    await fetch(`/api/feedback/${id}`, { method: 'DELETE' })
     load()
   }
 
@@ -264,7 +269,7 @@ export default function FeedbackPage() {
             <div className="feedback-meta">
               <span>{total} items</span>
             </div>
-            <div className="feedback-grid feedback-header">
+                       <div className="feedback-grid feedback-header">
               <span>FEEDBACK</span>
               <span>CHANNEL</span>
               <span>SENTIMENT</span>
@@ -272,6 +277,7 @@ export default function FeedbackPage() {
               <span>FEATURE AREA</span>
               <span>STATUS</span>
               <span>DATE</span>
+              <span></span>
             </div>
             {loading ? (
               <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>
@@ -307,7 +313,10 @@ export default function FeedbackPage() {
                       { value: 'ACTIONED', label: 'ACTIONED' },
                     ]}
                   />
-                  <span>{new Date(row.createdAt).toLocaleDateString()}</span>
+                                   <span>{new Date(row.createdAt).toLocaleDateString()}</span>
+                  <Button danger size="small" onClick={() => deleteFeedback(row.id)}>
+                    Delete
+                  </Button>
                 </div>
               ))
             )}
