@@ -154,3 +154,16 @@ body.dark-mode .status-new { background: #1f2450; border-color: #3a3f80; color: 
 body.dark-mode .status-reviewed { background: #3a2f0f; border-color: #7a5f1f; color: #f0c766; }
 body.dark-mode .status-actioned { background: #0f3320; border-color: #1f6b41; color: #6ee7a0; }
 .user-switch { justify-content: space-between; }
+
+.report-print-header { display: none; }
+
+@media print {
+  .no-print { display: none !important; }
+  .app-shell { display: block; background: white; color: black; }
+  .app-main { width: 100%; }
+  .overview-content { max-width: 100%; padding: 20px; }
+  .report-print-area { border: none !important; box-shadow: none !important; }
+  .report-print-header { display: block; font-size: 12px; color: #666; margin-bottom: 16px; border-bottom: 1px solid #ccc; padding-bottom: 8px; }
+  body.dark-mode { background: white !important; }
+  body.dark-mode .app-shell { background: white !important; color: black !important; }
+}
