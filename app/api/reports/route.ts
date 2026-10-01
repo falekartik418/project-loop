@@ -95,5 +95,13 @@ export async function POST(req: Request) {
     },
   })
 
+  await db.notification.create({
+    data: {
+      workspaceId,
+      message: `New report "${report.title}" is ready`,
+      href: `/reports`,
+    },
+  })
+
   return NextResponse.json({ report }, { status: 201 })
 }

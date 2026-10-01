@@ -3,7 +3,7 @@
 import { useThemeMode } from '@/app/theme-provider'
 import { useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { BellOutlined, MoonOutlined, SunOutlined, SearchOutlined } from '@ant-design/icons'
+import { BellOutlined, MoonOutlined, SunOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons'
 import Link from 'next/link'
 
 interface SearchResult {
@@ -86,26 +86,49 @@ export function Topbar() {
 
       <div className="top-actions">
         <div style={{ position: 'relative' }}>
-          <BellOutlined onClick={() => setNotifOpen((v) => !v)} style={{ cursor: 'pointer' }} />
+         <BellOutlined
+  onClick={async () => {
+    const next = !notifOpen
+    setNotifOpen(next)
+    if (next) {
+      const res = await fetch('/api/notifications')
+      const data = await res.json()
+      setNotifications(data.notifications ?? [])
+    }
+  }}
+  style={{ cursor: 'pointer' }}
+/>
           {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
           {notifOpen && (
             <div className="notif-dropdown">
               <div className="notif-header">
                 <strong>Notifications</strong>
-                {unreadCount > 0 && (
-                  <button onClick={markAllRead} className="notif-mark-read">Mark all read</button>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {unreadCount > 0 && (
+                    <button onClick={markAllRead} className="notif-mark-read">Mark all read</button>
+                  )}
+                  <CloseOutlined
+                    onClick={() => setNotifOpen(false)}
+                    style={{ cursor: 'pointer', color: '#9ca3af', fontSize: 13 }}
+                  />
+                </div>
               </div>
               {notifications.length === 0 ? (
-                <div className="notif-empty">No notifications</div>
-              ) : (
-                notifications.map((n) => (
-                  <a key={n.id} href={n.href} className={`notif-item ${n.read ? '' : 'unread'}`}>
-                    <div>{n.message}</div>
-                    <small>{new Date(n.createdAt).toLocaleDateString()}</small>
-                  </a>
-                ))
-              )}
+  <div className="notif-empty">
+    <BellOutlined style={{ fontSize: 22, color: '#d1d5db', marginBottom: 8, display: 'block' }} />
+    No notifications yet
+  </div>
+) : (
+  notifications.map((n) => (
+    <a key={n.id} href={n.href} className={`notif-item ${n.read ? '' : 'unread'}`}>
+      {!n.read && <span className="notif-dot" />}
+      <div className="notif-item-body">
+        <div>{n.message}</div>
+        <small>{new Date(n.createdAt).toLocaleDateString()}</small>
+      </div>
+    </a>
+  ))
+)}
             </div>
           )}
         </div>
@@ -133,7 +156,13 @@ export function Topbar() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search feedback, themes..."
               />
-              <kbd>ESC</kbd>
+              <CloseOutlined
+                onClick={() => {
+                  setQuery('')
+                  setSearchOpen(false)
+                }}
+                style={{ cursor: 'pointer', color: '#9ca3af', fontSize: 14 }}
+              />
             </div>
             <div className="search-modal-results">
               {query.trim() === '' ? (

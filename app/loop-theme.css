@@ -241,3 +241,169 @@ body.dark-mode .status-actioned { background: #0f3320; border-color: #1f6b41; co
   background: var(--t-primary);
   border-color: var(--t-primary);
 }
+
+.search-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 100px;
+  z-index: 1000;
+}
+.search-modal {
+  background: #fff;
+  width: 560px;
+  max-width: 90vw;
+  border-radius: 10px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.search-modal-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.search-modal-input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #11152d;
+  font-size: 15px;
+}
+.search-modal-results {
+  max-height: 360px;
+  overflow-y: auto;
+}
+.search-result-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 16px;
+  text-decoration: none;
+  color: #11152d;
+}
+.search-result-row:hover {
+  background: rgba(99,102,241,0.06);
+}
+.search-result-type {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #6366f1;
+  width: 60px;
+}
+.search-modal-empty {
+  padding: 30px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+body.dark-mode .search-modal { background: #171b2d; }
+body.dark-mode .search-modal-input { border-bottom-color: #2a2f45; }
+body.dark-mode .search-modal-input input { color: #e5e7eb; }
+body.dark-mode .search-result-row { color: #e5e7eb; }
+body.dark-mode .search-modal-empty { color: #7f8db3; }
+
+.notif-dropdown {
+  position: absolute;
+  top: 34px;
+  right: 0;
+  width: 340px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(17, 21, 45, 0.14), 0 2px 6px rgba(17, 21, 45, 0.06);
+  border: 1px solid #edf0f4;
+  z-index: 60;
+  max-height: 420px;
+  overflow-y: auto;
+  animation: notif-pop 0.15s ease-out;
+}
+@keyframes notif-pop {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #edf0f4;
+  position: sticky;
+  top: 0;
+  background: #fff;
+}
+.notif-header strong {
+  font-size: 14px;
+  color: #11152d;
+}
+.notif-mark-read {
+  border: none;
+  background: transparent;
+  color: #5038f2;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+.notif-mark-read:hover { text-decoration: underline; }
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  text-decoration: none;
+  color: #203654;
+  transition: background 0.12s;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: #f8f9fc; }
+.notif-item.unread { background: #f6f5ff; }
+.notif-item.unread:hover { background: #efedff; }
+.notif-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5038f2;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+.notif-item-body { display: grid; gap: 3px; }
+.notif-item-body > div:first-child { font-size: 13px; line-height: 1.4; }
+.notif-item-body small { color: #8b95ab; font-size: 11px; }
+.notif-badge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  background: #ff4d5e;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 1px 5px;
+  min-width: 15px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #fff;
+}
+.notif-empty {
+  padding: 36px 20px;
+  text-align: center;
+  color: #9aa6bd;
+  font-size: 13px;
+}
+
+body.dark-mode .notif-dropdown { background: #171b2d; border-color: #2a2f45; }
+body.dark-mode .notif-header { background: #171b2d; border-bottom-color: #2a2f45; }
+body.dark-mode .notif-header strong { color: #e4e9f7; }
+body.dark-mode .notif-item { color: #c3cce3; border-bottom-color: #232842; }
+body.dark-mode .notif-item:hover { background: #1d2236; }
+body.dark-mode .notif-item.unread { background: #1b1a3a; }
+body.dark-mode .notif-item.unread:hover { background: #221f47; }
+body.dark-mode .notif-item-body small { color: #7f8db3; }
+body.dark-mode .notif-empty { color: #7f8db3; }
+body.dark-mode .notif-badge { box-shadow: 0 0 0 2px #171b2d; }
