@@ -98,7 +98,7 @@ export default function LandingPage() {
           </div>
           <div className="workflow-grid">
             {workflow.map(([number, title, text]) => (
-              <Card bordered={false} className="workflow-card" key={title}>
+              <Card variant="borderless" className="workflow-card" key={title}>
                 <small>{number}</small>
                 <h3>{title}</h3>
                 <p>{text}</p>
@@ -114,7 +114,7 @@ export default function LandingPage() {
           </div>
           <div className="feature-grid">
             {features.map(([icon, title, text, detail]) => (
-              <Card bordered={false} className="feature-card" key={title as string}>
+              <Card variant="borderless" className="feature-card" key={title as string}>
                 <div className="feature-icon">{icon}</div>
                 <h3>{title}</h3>
                 <p>{text}</p>

@@ -176,3 +176,20 @@ body.dark-mode .status-actioned { background: #0f3320; border-color: #1f6b41; co
   height: 100vh;
   overflow-y: auto;
 }
+
+
+/* Colorful "Log in" button on the landing page nav */
+.nav-actions .login {
+  background: linear-gradient(135deg, #7c6cf5, #ff6ec4) !important;
+  color: #fff !important;
+  border-radius: 20px !important;
+  padding: 7px 18px !important;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 3px 10px rgba(124, 108, 245, 0.35);
+}
+.nav-actions .login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(124, 108, 245, 0.5);
+  color: #fff !important;
+}

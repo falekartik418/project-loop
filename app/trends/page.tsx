@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { Topbar } from '@/components/Topbar'
 import {
   BarChartOutlined,
   DatabaseOutlined,
@@ -15,6 +16,9 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { Card, Tag } from 'antd'
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts'
 
 function Mark() {
   return (
@@ -54,6 +58,12 @@ export default function TrendsPage() {
       })
   }, [status])
 
+  const chartData = trends.map((t) => ({
+    name: t.themeName,
+    'This period': t.currentCount,
+    'Previous period': t.previousCount,
+  }))
+
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
@@ -90,7 +100,7 @@ export default function TrendsPage() {
           <button>
             <DatabaseOutlined /> Workspace
           </button>
-            <Link href="/members">
+          <Link href="/members">
             <button>
               <UserOutlined /> Members
             </button>
@@ -108,11 +118,7 @@ export default function TrendsPage() {
         </div>
       </aside>
       <div className="app-main">
-        <header className="app-topbar">
-          <div className="search-box">
-            <SearchOutlined /> <span>Search LOOP...</span>
-          </div>
-        </header>
+        <Topbar />
         <main className="trends-content">
           <div className="trends-heading">
             <div>
@@ -120,6 +126,30 @@ export default function TrendsPage() {
               <p>Identify emerging customer needs before they become bigger problems.</p>
             </div>
           </div>
+
+          <Card className="trend-chart-card">
+            <h3>Mentions by theme — this period vs previous</h3>
+            {loading ? (
+              <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>
+            ) : chartData.length === 0 ? (
+              <div style={{ padding: 40, textAlign: 'center', color: '#8ba0bd' }}>
+                No theme data yet — classify some feedback first.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="This period" fill="#5038f2" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Previous period" fill="#b7aefc" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Card>
+
           <Card className="all-themes-card">
             <h3>All themes</h3>
             <div className="themes-table">

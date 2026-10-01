@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { LogoutOutlined } from '@ant-design/icons'
+import { Topbar } from '@/components/Topbar'
 import {
   BarChartOutlined,
   DatabaseOutlined,
@@ -187,11 +188,7 @@ export default function FeedbackPage() {
 </div>
       </aside>
       <div className="app-main">
-        <header className="app-topbar">
-          <div className="search-box">
-            <SearchOutlined /> <span>Search LOOP...</span>
-          </div>
-        </header>
+       <Topbar />
         <main className="feedback-content">
           <div className="feedback-heading">
             <div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { LogoutOutlined } from '@ant-design/icons'
+import { Topbar } from '@/components/Topbar'
 import {
   BarChartOutlined,
   DatabaseOutlined,
@@ -153,11 +154,7 @@ export default function ReportsPage() {
         </div>
       </aside>
       <div className="app-main">
-        <header className="app-topbar no-print">
-          <div className="search-box">
-            <SearchOutlined /> <span>Search LOOP...</span>
-          </div>
-        </header>
+       <Topbar />
         <main className="overview-content">
           <div className="overview-heading no-print">
             <div>
