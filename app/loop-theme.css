@@ -167,3 +167,12 @@ body.dark-mode .status-actioned { background: #0f3320; border-color: #1f6b41; co
   body.dark-mode { background: white !important; }
   body.dark-mode .app-shell { background: white !important; color: black !important; }
 }
+
+
+/* Keep the sidebar fixed in place while the main content scrolls */
+.app-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
