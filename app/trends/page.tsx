@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Topbar } from '@/components/Topbar'
 import {
   BarChartOutlined,
+  BgColorsOutlined,
   DatabaseOutlined,
   FileTextOutlined,
   LineChartOutlined,
@@ -92,6 +93,11 @@ export default function TrendsPage() {
           <Link href="/reports">
             <button>
               <FileTextOutlined /> Reports
+            </button>
+          </Link>
+          <Link href="/themes">
+            <button>
+              <BgColorsOutlined /> Themes
             </button>
           </Link>
         </nav>

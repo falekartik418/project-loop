@@ -9,6 +9,7 @@ import { Topbar } from '@/components/Topbar'
 import {
   ArrowRightOutlined,
   BarChartOutlined,
+  BgColorsOutlined,
   DatabaseOutlined,
   FileTextOutlined,
   LineChartOutlined,
@@ -109,6 +110,11 @@ export default function AskPage() {
               <FileTextOutlined /> Reports
             </button>
           </Link>
+          <Link href="/themes">
+            <button>
+              <BgColorsOutlined /> Themes
+            </button>
+          </Link>
         </nav>
         <div className="workspace-label">WORKSPACE</div>
         <nav className="app-nav secondary">
@@ -125,19 +131,19 @@ export default function AskPage() {
           </button>
         </nav>
         <div className="user-switch">
-  <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-    <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
-    <div>
-      <strong>{session?.user?.name}</strong>
-      <small>{session?.user?.role}</small>
-    </div>
-  </Link>
-  <LogoutOutlined
-    onClick={() => signOut({ callbackUrl: '/login' })}
-    style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
-    title="Log out"
-  />
-</div>
+          <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
+            <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
+            <div>
+              <strong>{session?.user?.name}</strong>
+              <small>{session?.user?.role}</small>
+            </div>
+          </Link>
+          <LogoutOutlined
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
+            title="Log out"
+          />
+        </div>
       </aside>
       <div className="app-main">
         <Topbar />

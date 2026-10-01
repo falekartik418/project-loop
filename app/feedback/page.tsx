@@ -8,6 +8,7 @@ import { LogoutOutlined } from '@ant-design/icons'
 import { Topbar } from '@/components/Topbar'
 import {
   BarChartOutlined,
+  BgColorsOutlined,
   DatabaseOutlined,
   FileTextOutlined,
   LineChartOutlined,
@@ -152,9 +153,14 @@ export default function FeedbackPage() {
               <RadarChartOutlined /> Ask LOOP <Tag>AI</Tag>
             </button>
           </Link>
-          <Link href="/reports">
+                   <Link href="/reports">
             <button>
               <FileTextOutlined /> Reports
+            </button>
+          </Link>
+          <Link href="/themes">
+            <button>
+              <BgColorsOutlined /> Themes
             </button>
           </Link>
         </nav>

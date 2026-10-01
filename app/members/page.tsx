@@ -8,6 +8,7 @@ import { LogoutOutlined } from '@ant-design/icons'
 import { Topbar } from '@/components/Topbar'
 import {
   BarChartOutlined,
+  BgColorsOutlined,
   DatabaseOutlined,
   FileTextOutlined,
   LineChartOutlined,
@@ -43,6 +44,7 @@ export default function MembersPage() {
   const [loading, setLoading] = useState(true)
   const [addOpen, setAddOpen] = useState(false)
   const [form] = Form.useForm()
+  const [messageApi, contextHolder] = message.useMessage()
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
@@ -70,9 +72,9 @@ export default function MembersPage() {
     })
     if (!res.ok) {
       const data = await res.json()
-      message.error(data.error ?? 'Failed to update role')
+      messageApi.error(data.error ?? 'Failed to update role')
     } else {
-      message.success('Role updated')
+      messageApi.success('Role updated')
     }
     load()
   }
@@ -81,9 +83,9 @@ export default function MembersPage() {
     const res = await fetch(`/api/workspace/members/${id}`, { method: 'DELETE' })
     if (!res.ok) {
       const data = await res.json()
-      message.error(data.error ?? 'Failed to remove member')
+      messageApi.error(data.error ?? 'Failed to remove member')
     } else {
-      message.success('Member removed')
+      messageApi.success('Member removed')
     }
     load()
   }
@@ -98,10 +100,10 @@ export default function MembersPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        message.error(data.error ?? 'Failed to add member')
+        messageApi.error(data.error ?? 'Failed to add member')
         return
       }
-      message.success('Member added')
+      messageApi.success('Member added')
       setAddOpen(false)
       form.resetFields()
       load()
@@ -112,6 +114,7 @@ export default function MembersPage() {
 
   return (
     <div className="app-shell">
+      {contextHolder}
       <aside className="app-sidebar">
         <div className="app-logo">
           <Mark /> LOOP
@@ -142,6 +145,11 @@ export default function MembersPage() {
               <FileTextOutlined /> Reports
             </button>
           </Link>
+          <Link href="/themes">
+            <button>
+              <BgColorsOutlined /> Themes
+            </button>
+          </Link>
         </nav>
         <div className="workspace-label">WORKSPACE</div>
         <nav className="app-nav secondary">
@@ -160,19 +168,19 @@ export default function MembersPage() {
           </Link>
         </nav>
         <div className="user-switch">
-  <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-    <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
-    <div>
-      <strong>{session?.user?.name}</strong>
-      <small>{session?.user?.role}</small>
-    </div>
-  </Link>
-  <LogoutOutlined
-    onClick={() => signOut({ callbackUrl: '/login' })}
-    style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
-    title="Log out"
-  />
-</div>
+          <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
+            <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
+            <div>
+              <strong>{session?.user?.name}</strong>
+              <small>{session?.user?.role}</small>
+            </div>
+          </Link>
+          <LogoutOutlined
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
+            title="Log out"
+          />
+        </div>
       </aside>
       <div className="app-main">
         <Topbar />
