@@ -8,6 +8,7 @@ import { Topbar } from '@/components/Topbar'
 import { LogoutOutlined } from '@ant-design/icons'
 import {
   BarChartOutlined,
+  BgColorsOutlined,
   BellOutlined,
   DatabaseOutlined,
   FileTextOutlined,
@@ -159,13 +160,18 @@ export default function DashboardPage() {
               <FileTextOutlined /> Reports
             </button>
           </Link>
+          <Link href="/themes">
+            <button>
+              <BgColorsOutlined /> Themes
+            </button>
+          </Link>
         </nav>
         <div className="workspace-label">WORKSPACE</div>
         <nav className="app-nav secondary">
           <button>
             <DatabaseOutlined /> Workspace
           </button>
-                    <Link href="/members">
+          <Link href="/members">
             <button>
               <UserOutlined /> Members
             </button>
@@ -175,19 +181,22 @@ export default function DashboardPage() {
           </button>
         </nav>
         <div className="user-switch">
-  <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-    <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
-    <div>
-      <strong>{session?.user?.name}</strong>
-      <small>{session?.user?.role}</small>
-    </div>
-  </Link>
-  <LogoutOutlined
-    onClick={() => signOut({ callbackUrl: '/login' })}
-    style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
-    title="Log out"
-  />
-</div>
+          <Link
+            href="/profile"
+            style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}
+          >
+            <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
+            <div>
+              <strong>{session?.user?.name}</strong>
+              <small>{session?.user?.role}</small>
+            </div>
+          </Link>
+          <LogoutOutlined
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
+            title="Log out"
+          />
+        </div>
       </aside>
       <div className="app-main">
         <Topbar />
@@ -326,7 +335,7 @@ export default function DashboardPage() {
                       <strong>{t.themeName}</strong>
                       <small>{t.currentCount} mentions</small>
                     </div>
-                                       <span>
+                    <span>
                       {t.changePercent >= 0 ? '↑' : '↓'} {Math.abs(t.changePercent)}%
                     </span>
                     <Tag
@@ -381,20 +390,26 @@ export default function DashboardPage() {
                   </span>
                   <span>{row.channel}</span>
                   <Tag
-  className={
-    row.sentiment === 'NEG' ? 'negative' : row.sentiment === 'POS' ? 'positive' : 'neutral'
-  }
->
-    {row.sentiment === 'NEG' ? 'NEGATIVE' : row.sentiment === 'POS' ? 'POSITIVE' : row.sentiment === 'NEU' ? 'NEUTRAL' : 'UNCLASSIFIED'}
-</Tag>
+                    className={
+                      row.sentiment === 'NEG' ? 'negative' : row.sentiment === 'POS' ? 'positive' : 'neutral'
+                    }
+                  >
+                    {row.sentiment === 'NEG'
+                      ? 'NEGATIVE'
+                      : row.sentiment === 'POS'
+                      ? 'POSITIVE'
+                      : row.sentiment === 'NEU'
+                      ? 'NEUTRAL'
+                      : 'UNCLASSIFIED'}
+                  </Tag>
                   <span>{row.themes[0]?.theme.name ?? '—'}</span>
                   <Tag
-  className={
-    row.status === 'ACTIONED' ? 'status-actioned' : row.status === 'REVIEWED' ? 'status-reviewed' : 'status-new'
-  }
->
-  {row.status}
-</Tag>
+                    className={
+                      row.status === 'ACTIONED' ? 'status-actioned' : row.status === 'REVIEWED' ? 'status-reviewed' : 'status-new'
+                    }
+                  >
+                    {row.status}
+                  </Tag>
                   <span>{new Date(row.createdAt).toLocaleDateString()}</span>
                 </div>
               ))}

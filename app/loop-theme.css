@@ -193,3 +193,51 @@ body.dark-mode .status-actioned { background: #0f3320; border-color: #1f6b41; co
   box-shadow: 0 6px 16px rgba(124, 108, 245, 0.5);
   color: #fff !important;
 }
+
+/* ===== Theme system ===== */
+:root {
+  --t-primary: #5038f2;
+  --t-sidebar: #0c0f1b;
+  --t-sidebar-active: #1d1b4b;
+  --t-bg: #f5f7fa;
+}
+
+.app-shell { background: var(--t-bg); }
+.app-sidebar { background: var(--t-sidebar); }
+.app-nav button:hover,
+.app-nav button.active { background: var(--t-sidebar-active); }
+
+.button,
+.sign-in-button,
+.setup-button { background: var(--t-primary) !important; }
+.button { border-color: var(--t-primary) !important; }
+
+.feedback-heading .feedback-add,
+.feedback-pagination .ant-btn-primary {
+  background: var(--t-primary);
+  border-color: var(--t-primary);
+}
+
+/* ===== Theme system ===== */
+:root {
+  --t-primary: #5038f2;
+  --t-sidebar: #0c0f1b;
+  --t-sidebar-active: #1d1b4b;
+  --t-bg: #f5f7fa;
+}
+
+.app-shell { background: var(--t-bg); }
+.app-sidebar { background: var(--t-sidebar); }
+.app-nav button:hover,
+.app-nav button.active { background: var(--t-sidebar-active); }
+
+.button,
+.sign-in-button,
+.setup-button { background: var(--t-primary) !important; }
+.button { border-color: var(--t-primary) !important; }
+
+.feedback-heading .feedback-add,
+.feedback-pagination .ant-btn-primary {
+  background: var(--t-primary);
+  border-color: var(--t-primary);
+}
