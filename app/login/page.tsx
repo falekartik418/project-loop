@@ -79,6 +79,9 @@ export default function LoginPage() {
             >
               <Input.Password size="large" placeholder="••••••••" />
             </Form.Item>
+            <div className="forgot-row">
+              <Link href="/forgot-password">Forgot password?</Link>
+            </div>
             <Button
               htmlType="submit"
               type="primary"

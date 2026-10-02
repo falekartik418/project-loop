@@ -52,6 +52,9 @@ model User {
 
   emailNotifications Boolean @default(true)
 
+  resetToken       String?
+  resetTokenExpiry  DateTime?
+
   @@index([workspaceId])
 }
 model Feedback {
