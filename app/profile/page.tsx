@@ -6,11 +6,12 @@ import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { LogoutOutlined } from '@ant-design/icons'
 import {
-  BarChartOutlined, DatabaseOutlined, FileTextOutlined, LineChartOutlined,
+  BarChartOutlined, BgColorsOutlined, DatabaseOutlined, FileTextOutlined, LineChartOutlined,
   RadarChartOutlined, SettingOutlined, UserOutlined,
 } from '@ant-design/icons'
 import { Card, Tag, Input, Button, message } from 'antd'
 import { Topbar } from '@/components/Topbar'
+import { useReadOnly } from '@/components/useReadOnly'
 
 function Mark() {
   return (
@@ -39,6 +40,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [savingName, setSavingName] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
+  const [messageApi, contextHolder] = message.useMessage()
+  const { isViewer, showReadOnly, contextHolder: readOnlyHolder } = useReadOnly()
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
@@ -58,6 +61,10 @@ export default function ProfilePage() {
   }, [status])
 
   async function saveName() {
+    if (isViewer) {
+      showReadOnly()
+      return
+    }
     setSavingName(true)
     const res = await fetch('/api/profile', {
       method: 'PATCH',
@@ -68,17 +75,21 @@ export default function ProfilePage() {
       const data = await res.json()
       setProfile(data.user)
       await update({ name: data.user.name })
-      message.success('Name updated')
+      messageApi.success('Name updated')
     } else {
       const data = await res.json().catch(() => ({}))
-      message.error(data.error ?? 'Failed to update name')
+      messageApi.error(data.error ?? 'Failed to update name')
     }
     setSavingName(false)
   }
 
   async function savePassword() {
+    if (isViewer) {
+      showReadOnly()
+      return
+    }
     if (!currentPassword || !newPassword) {
-      message.error('Enter both current and new password')
+      messageApi.error('Enter both current and new password')
       return
     }
     setSavingPassword(true)
@@ -88,18 +99,20 @@ export default function ProfilePage() {
       body: JSON.stringify({ currentPassword, newPassword }),
     })
     if (res.ok) {
-      message.success('Password updated')
+      messageApi.success('Password updated')
       setCurrentPassword('')
       setNewPassword('')
     } else {
       const data = await res.json().catch(() => ({}))
-      message.error(data.error ?? 'Failed to update password')
+      messageApi.error(data.error ?? 'Failed to update password')
     }
     setSavingPassword(false)
   }
 
   return (
     <div className="app-shell">
+      {contextHolder}
+      {readOnlyHolder}
       <aside className="app-sidebar">
         <div className="app-logo"><Mark /> LOOP</div>
         <nav className="app-nav">
@@ -108,6 +121,7 @@ export default function ProfilePage() {
           <Link href="/trends"><button><LineChartOutlined /> Trends</button></Link>
           <Link href="/ask"><button><RadarChartOutlined /> Ask LOOP <Tag>AI</Tag></button></Link>
           <Link href="/reports"><button><FileTextOutlined /> Reports</button></Link>
+          <Link href="/themes"><button><BgColorsOutlined /> Themes</button></Link>
         </nav>
         <div className="workspace-label">WORKSPACE</div>
         <nav className="app-nav secondary">
@@ -115,20 +129,20 @@ export default function ProfilePage() {
           <Link href="/members"><button><UserOutlined /> Members</button></Link>
           <Link href="/settings"><button><SettingOutlined /> Settings</button></Link>
         </nav>
-       <div className="user-switch">
-  <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-    <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
-    <div>
-      <strong>{session?.user?.name}</strong>
-      <small>{session?.user?.role}</small>
-    </div>
-  </Link>
-  <LogoutOutlined
-    onClick={() => signOut({ callbackUrl: '/login' })}
-    style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
-    title="Log out"
-  />
-</div>
+        <div className="user-switch">
+          <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
+            <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
+            <div>
+              <strong>{session?.user?.name}</strong>
+              <small>{session?.user?.role}</small>
+            </div>
+          </Link>
+          <LogoutOutlined
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
+            title="Log out"
+          />
+        </div>
       </aside>
 
       <div className="app-main">

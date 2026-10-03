@@ -3,6 +3,8 @@ import { z } from 'zod'
 import bcrypt from 'bcryptjs'
 import { db } from '@/lib/db'
 
+const DEMO_EMAIL = 'demo@loop.com'
+
 const schema = z.object({
   token: z.string().min(1),
   password: z.string().min(8),
@@ -24,7 +26,8 @@ export async function POST(req: Request) {
     },
   })
 
-  if (!user) {
+  // Second layer: never allow the shared Demo Viewer password to change.
+  if (!user || user.email === DEMO_EMAIL) {
     return NextResponse.json({ error: 'This reset link is invalid or has expired.' }, { status: 400 })
   }
 

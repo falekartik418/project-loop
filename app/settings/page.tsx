@@ -6,11 +6,12 @@ import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { LogoutOutlined } from '@ant-design/icons'
 import {
-  BarChartOutlined, DatabaseOutlined, FileTextOutlined, LineChartOutlined,
+  BarChartOutlined, BgColorsOutlined, DatabaseOutlined, FileTextOutlined, LineChartOutlined,
   RadarChartOutlined, SettingOutlined, UserOutlined,
 } from '@ant-design/icons'
 import { Card, Tag, Switch, Button, Modal, Input, message } from 'antd'
 import { Topbar } from '@/components/Topbar'
+import { useReadOnly } from '@/components/useReadOnly'
 
 function Mark() {
   return (
@@ -30,6 +31,8 @@ export default function SettingsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmText, setConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [messageApi, contextHolder] = message.useMessage()
+  const { isViewer, showReadOnly, contextHolder: readOnlyHolder } = useReadOnly()
 
   const isAdmin = session?.user?.role === 'ADMIN'
 
@@ -50,6 +53,10 @@ export default function SettingsPage() {
   }, [status])
 
   async function toggleNotifications(checked: boolean) {
+    if (isViewer) {
+      showReadOnly()
+      return
+    }
     setSavingToggle(true)
     setEmailNotifications(checked)
     const res = await fetch('/api/settings', {
@@ -59,30 +66,47 @@ export default function SettingsPage() {
     })
     if (!res.ok) {
       setEmailNotifications(!checked)
-      message.error('Failed to update preference')
+      messageApi.error('Failed to update preference')
     }
     setSavingToggle(false)
   }
 
   async function deleteWorkspace() {
+    if (!isAdmin) {
+      setConfirmOpen(false)
+      setConfirmText('')
+      showReadOnly()
+      return
+    }
     if (confirmText !== 'DELETE') {
-      message.error('Type DELETE to confirm')
+      messageApi.error('Type DELETE to confirm')
       return
     }
     setDeleting(true)
     const res = await fetch('/api/settings', { method: 'DELETE' })
     if (res.ok) {
-      message.success('Workspace deleted')
+      messageApi.success('Workspace deleted')
       signOut({ callbackUrl: '/login' })
     } else {
       const data = await res.json().catch(() => ({}))
-      message.error(data.error ?? 'Failed to delete workspace')
+      messageApi.error(data.error ?? 'Failed to delete workspace')
       setDeleting(false)
     }
   }
 
+  // Non-admins click Delete Workspace and get the popup instead of the confirm dialog
+  function openDeleteDialog() {
+    if (!isAdmin) {
+      showReadOnly()
+      return
+    }
+    setConfirmOpen(true)
+  }
+
   return (
     <div className="app-shell">
+      {contextHolder}
+      {readOnlyHolder}
       <aside className="app-sidebar">
         <div className="app-logo"><Mark /> LOOP</div>
         <nav className="app-nav">
@@ -91,6 +115,7 @@ export default function SettingsPage() {
           <Link href="/trends"><button><LineChartOutlined /> Trends</button></Link>
           <Link href="/ask"><button><RadarChartOutlined /> Ask LOOP <Tag>AI</Tag></button></Link>
           <Link href="/reports"><button><FileTextOutlined /> Reports</button></Link>
+          <Link href="/themes"><button><BgColorsOutlined /> Themes</button></Link>
         </nav>
         <div className="workspace-label">WORKSPACE</div>
         <nav className="app-nav secondary">
@@ -99,19 +124,19 @@ export default function SettingsPage() {
           <button className="active"><SettingOutlined /> Settings</button>
         </nav>
         <div className="user-switch">
-  <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-    <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
-    <div>
-      <strong>{session?.user?.name}</strong>
-      <small>{session?.user?.role}</small>
-    </div>
-  </Link>
-  <LogoutOutlined
-    onClick={() => signOut({ callbackUrl: '/login' })}
-    style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
-    title="Log out"
-  />
-</div>
+          <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
+            <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
+            <div>
+              <strong>{session?.user?.name}</strong>
+              <small>{session?.user?.role}</small>
+            </div>
+          </Link>
+          <LogoutOutlined
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
+            title="Log out"
+          />
+        </div>
       </aside>
 
       <div className="app-main">
@@ -141,15 +166,13 @@ export default function SettingsPage() {
                 </div>
               </Card>
 
-              {isAdmin && (
-                <Card style={{ marginTop: 20, borderColor: '#ef4444' }}>
-                  <div className="panel-heading"><h3 style={{ color: '#ef4444' }}>Danger Zone</h3></div>
-                  <p style={{ color: '#647793', fontSize: 13, marginBottom: 12 }}>
-                    Deleting the workspace permanently removes all members, feedback, themes, and reports. This cannot be undone.
-                  </p>
-                  <Button danger onClick={() => setConfirmOpen(true)}>Delete Workspace</Button>
-                </Card>
-              )}
+              <Card style={{ marginTop: 20, borderColor: '#ef4444' }}>
+                <div className="panel-heading"><h3 style={{ color: '#ef4444' }}>Danger Zone</h3></div>
+                <p style={{ color: '#647793', fontSize: 13, marginBottom: 12 }}>
+                  Deleting the workspace permanently removes all members, feedback, themes, and reports. This cannot be undone.
+                </p>
+                <Button danger onClick={openDeleteDialog}>Delete Workspace</Button>
+              </Card>
             </>
           )}
         </main>

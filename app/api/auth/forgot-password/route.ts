@@ -3,6 +3,8 @@ import { z } from 'zod'
 import crypto from 'crypto'
 import { db } from '@/lib/db'
 
+const DEMO_EMAIL = 'demo@loop.com'
+
 const schema = z.object({
   email: z.string().email(),
 })
@@ -15,6 +17,13 @@ export async function POST(req: Request) {
   }
 
   const email = parsed.data.email.toLowerCase()
+
+  // The shared Demo Viewer account must never be reset. Respond exactly
+  // like an unknown email, so nothing reveals that the account is special.
+  if (email === DEMO_EMAIL) {
+    return NextResponse.json({ ok: true })
+  }
+
   const user = await db.user.findUnique({ where: { email } })
 
   // Don't reveal whether the email exists — respond the same way either way.
