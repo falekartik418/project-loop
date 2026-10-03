@@ -13,10 +13,12 @@ Built as a corporate-grade, multi-tenant web application — every workspace's d
 
 | Role | Email | Password |
 |---|---|---|
+| Demo Viewer (read-only, for evaluators) | `demo@loop.com` | `demo123` |
 | Admin | `admin@loop.com` | `password123` |
 | Analyst | `analyst@loop.com` | `password123` |
 | Viewer | `viewer@loop.com` | `password123` |
 
+On the login page, click **Continue as Demo Viewer** to sign in without typing credentials. Every action that changes data (add, edit, delete, generate, save) shows a "Read-only access" popup, and the backend also rejects the request with a 403, so the account stays read-only even if the API is called directly. The demo account cannot be reset through Forgot password.
 ## Features
 
 ### Core
@@ -27,7 +29,7 @@ Built as a corporate-grade, multi-tenant web application — every workspace's d
 - Analytics dashboard: feedback volume over time, sentiment breakdown, top themes, trending themes
 - **Themes page** — create, color-code, and manage themes; click into any theme for a detail view with a 30-day mentions area chart, sentiment donut, and recent tagged feedback
 - Workspace, Members, Profile, and Settings management (rename workspace, invite/remove members, change roles, update profile, change password, notification preferences, delete workspace with cascading cleanup)
-- **Forgot password** flow with real email delivery via Resend
+-- **Forgot password** flow (the reset link is shown on screen because no email service is connected in this deployment)
 - Dark mode, global search (⌘K), and in-app notifications with real triggers (e.g. new report generated)
 
 ### AI (powered by Google Gemini)
@@ -113,13 +115,19 @@ npx tsx prisma/seed.ts
 ```
 This creates the demo workspace, three users (Admin, Analyst, Viewer), and 150+ sample feedback items across multiple channels.
 
-### 5. Run locally
+
+### 5. Create the read-only Demo Viewer
+```bash
+npx tsx --env-file=.env scripts/create-demo-user.ts
+```
+
+### 6. Run locally
 ```bash
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to `/login`.
 
-### 6. Classify existing feedback (if needed)
+### 7. Classify existing feedback (if needed)
 New feedback is classified automatically on ingestion. To (re)classify a backlog of unclassified items:
 ```bash
 npx tsx scripts/classify-all.ts
