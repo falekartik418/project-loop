@@ -21,12 +21,14 @@ Built as a corporate-grade, multi-tenant web application — every workspace's d
 
 ### Core
 - Multi-tenant workspaces with three roles: **Admin**, **Analyst**, **Viewer**
-- Role-based access control enforced server-side on every API route
+- Role-based access control enforced server-side on every API route, with friendly read-only warnings in the UI for Viewers
 - Feedback ingestion: single-entry form and CSV bulk upload
-- Feedback inbox with search, filters (channel, sentiment, status), and inline status workflow (NEW → REVIEWED → ACTIONED)
+- Feedback inbox with search, filters (channel, sentiment, status), combined filtering, pagination, and inline status workflow (NEW → REVIEWED → ACTIONED)
 - Analytics dashboard: feedback volume over time, sentiment breakdown, top themes, trending themes
-- Workspace, Members, Profile, and Settings management (rename workspace, invite/remove members, change roles, update profile, change password, notification preferences, delete workspace)
-- Dark mode, global search (⌘K), and in-app notifications
+- **Themes page** — create, color-code, and manage themes; click into any theme for a detail view with a 30-day mentions area chart, sentiment donut, and recent tagged feedback
+- Workspace, Members, Profile, and Settings management (rename workspace, invite/remove members, change roles, update profile, change password, notification preferences, delete workspace with cascading cleanup)
+- **Forgot password** flow with real email delivery via Resend
+- Dark mode, global search (⌘K), and in-app notifications with real triggers (e.g. new report generated)
 
 ### AI (powered by Google Gemini)
 - **Auto-classification** — every feedback item is automatically tagged with sentiment, sentiment score, theme(s), and a feature area on ingestion (both single-entry and CSV import)
@@ -44,6 +46,7 @@ Built as a corporate-grade, multi-tenant web application — every workspace's d
 | ORM | Prisma |
 | Auth | NextAuth (Auth.js) — credentials provider, hashed passwords (bcryptjs) |
 | AI | Google Gemini API (classification, embeddings, Q&A, report generation) |
+| Email | Resend (password reset delivery) |
 | Charts | Recharts |
 | Validation | Zod |
 | Deployment | Vercel |
@@ -129,8 +132,8 @@ Deployed on Vercel, connected to the `main` branch of this repository. Environme
 ## Project Structure
 
 app/
-  (pages): dashboard, feedback, trends, ask, reports, workspace, members, profile, settings, login, signup
-  api/: auth, feedback, insights, trends, ask, reports, workspace, members, profile, settings, search, notifications
+  (pages): dashboard, feedback, trends, ask, reports, themes, workspace, members, profile, settings, login, signup, forgot-password, reset-password
+  api/: auth (including forgot/reset password), feedback, insights, trends, ask, reports, themes (with per-theme stats), workspace, members, profile, settings, search, notifications
 components/
   Topbar.tsx — shared search, notifications, dark mode toggle
 lib/
