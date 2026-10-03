@@ -6,6 +6,7 @@ import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { Topbar } from '@/components/Topbar'
 import { LogoutOutlined } from '@ant-design/icons'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import {
   BarChartOutlined,
   BgColorsOutlined,
@@ -60,20 +61,6 @@ interface FeedbackItem {
   themes: Array<{ theme: { name: string } }>
 }
 
-function buildLinePath(values: number[], max: number): string {
-  if (values.length === 0) return ''
-  const w = 700
-  const h = 190
-  const step = values.length > 1 ? w / (values.length - 1) : 0
-  return values
-    .map((v, i) => {
-      const x = i * step
-      const y = max > 0 ? h - (v / max) * h : h
-      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`
-    })
-    .join(' ')
-}
-
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const { dark, toggle } = useThemeMode()
@@ -119,10 +106,6 @@ export default function DashboardPage() {
     : 0
 
   const volume = insights?.volumeOverTime ?? []
-  const maxVolume = Math.max(1, ...volume.map((v) => v.total))
-  const totalPath = buildLinePath(volume.map((v) => v.total), maxVolume)
-  const posPath = buildLinePath(volume.map((v) => v.positive), maxVolume)
-  const negPath = buildLinePath(volume.map((v) => v.negative), maxVolume)
 
   const posPct = totalSentiment ? Math.round(((insights?.sentimentBreakdown.POS ?? 0) / totalSentiment) * 100) : 0
   const neuPct = totalSentiment ? Math.round(((insights?.sentimentBreakdown.NEU ?? 0) / totalSentiment) * 100) : 0
@@ -242,32 +225,24 @@ export default function DashboardPage() {
                   <h3>Feedback Volume</h3>
                   <p>Last {volume.length} days with activity</p>
                 </div>
-                <div className="legend">
-                  <span className="total-dot" /> Total <span className="positive-dot" /> Positive{' '}
-                  <span className="negative-dot" /> Negative
-                </div>
               </div>
-              <div className="line-chart">
-                <div className="y-labels">
-                  <span>{maxVolume}</span>
-                  <span>{Math.round(maxVolume * 0.75)}</span>
-                  <span>{Math.round(maxVolume * 0.5)}</span>
-                  <span>{Math.round(maxVolume * 0.25)}</span>
-                  <span>0</span>
-                </div>
-                <svg viewBox="0 0 700 190" preserveAspectRatio="none">
-                  <path className="total-line" d={totalPath} />
-                  <path className="positive-line" d={posPath} />
-                  <path className="negative-line" d={negPath} />
-                </svg>
-                <div className="x-labels">
-                  {volume
-                    .filter((_, i) => i % Math.ceil(volume.length / 8 || 1) === 0)
-                    .map((v) => (
-                      <span key={v.date}>{new Date(v.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                    ))}
-                </div>
-              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={volume} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(d) => new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    tick={{ fontSize: 11, fill: '#8b9ac2' }}
+                  />
+                  <YAxis tick={{ fontSize: 11, fill: '#8b9ac2' }} allowDecimals={false} />
+                  <Tooltip
+                    labelFormatter={(d) => new Date(d as string).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    contentStyle={{ borderRadius: 8, fontSize: 12 }}
+                  />
+                  <Line type="monotone" dataKey="total" name="Total" stroke="#655cff" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="positive" name="Positive" stroke="#09b983" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="negative" name="Negative" stroke="#ff535b" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
             </Card>
             <Card className="sentiment-card">
               <div className="panel-heading">
@@ -275,18 +250,41 @@ export default function DashboardPage() {
                   <h3>Sentiment</h3>
                 </div>
               </div>
-              <div
-                className="donut"
-                style={{
-                  background: `conic-gradient(#09b983 0 ${posPct}%, #9eafc6 ${posPct}% ${posPct + neuPct}%, #ff535b ${posPct + neuPct}% 100%)`,
-                }}
-              >
-                <div>
-                  {totalSentiment}
-                  <br />
-                  <small>total</small>
-                </div>
-              </div>
+                            <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <defs>
+                    <filter id="donutShadow" height="130%">
+                      <feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.15" />
+                    </filter>
+                  </defs>
+                  <Pie
+                    data={[
+                      { name: 'Positive', value: insights?.sentimentBreakdown.POS ?? 0 },
+                      { name: 'Neutral', value: insights?.sentimentBreakdown.NEU ?? 0 },
+                      { name: 'Negative', value: insights?.sentimentBreakdown.NEG ?? 0 },
+                    ]}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={58}
+                    outerRadius={90}
+                    paddingAngle={3}
+                    cornerRadius={6}
+                    style={{ filter: 'url(#donutShadow)' }}
+                    label={({ name, percent }) =>
+                      percent && percent > 0.06 ? `${(percent * 100).toFixed(0)}%` : ''
+                    }
+                    labelLine={false}
+                  >
+                    <Cell fill="#09b983" stroke="#fff" strokeWidth={2} />
+                    <Cell fill="#9eafc6" stroke="#fff" strokeWidth={2} />
+                    <Cell fill="#ff535b" stroke="#fff" strokeWidth={2} />
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ borderRadius: 10, fontSize: 12, border: 'none', boxShadow: '0 4px 14px rgba(0,0,0,0.12)' }}
+                    formatter={(value: number, name: string) => [`${value} items`, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
               <div className="sentiment-legend">
                 <span>
                   <i className="positive-dot" /> Positive{' '}
