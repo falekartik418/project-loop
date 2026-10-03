@@ -281,7 +281,7 @@ export default function DashboardPage() {
                   </Pie>
                   <Tooltip
                     contentStyle={{ borderRadius: 10, fontSize: 12, border: 'none', boxShadow: '0 4px 14px rgba(0,0,0,0.12)' }}
-                    formatter={(value: number, name: string) => [`${value} items`, name]}
+                   formatter={(value, name) => [`${value ?? 0} items`, name]}
                   />
                 </PieChart>
               </ResponsiveContainer>
