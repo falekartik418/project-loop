@@ -407,3 +407,38 @@ body.dark-mode .notif-item.unread:hover { background: #221f47; }
 body.dark-mode .notif-item-body small { color: #7f8db3; }
 body.dark-mode .notif-empty { color: #7f8db3; }
 body.dark-mode .notif-badge { box-shadow: 0 0 0 2px #171b2d; }
+
+.demo-viewer-button {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  border: none !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  transition: all 0.2s ease;
+}
+
+.demo-viewer-button:hover {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+}
+/* Demo Viewer section on login page */
+.demo-login-section { margin-top: 20px; }
+.demo-divider { display: flex; align-items: center; gap: 12px; color: #8a97ad; font-size: 11px; margin-bottom: 14px; }
+.demo-divider::before, .demo-divider::after { content: ''; flex: 1; height: 1px; background: #dce2e9; }
+.demo-info { display: grid; gap: 2px; text-align: center; margin-bottom: 12px; }
+.demo-info strong { font-size: 14px; color: #10162a; }
+.demo-info span { font-size: 12px; color: #64718a; }
+.demo-note { margin: 12px 0 0; text-align: center; font-size: 11px; line-height: 1.5; color: #8a97ad; }
+.demo-login-section .ant-btn { height: 40px; border-radius: 6px; }
+
+/* "Read only" badge for demo viewers */
+.readonly-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 20px;
+  background: #eef2ff; border: 1px solid #c7d2fe;
+  color: #4338ca; font-size: 12px; font-weight: 600;
+}
+body.dark-mode .readonly-badge { background: #1f2450; border-color: #3a3f80; color: #9aa0ff; }
+body.dark-mode .demo-info strong { color: #e4e9f7; }

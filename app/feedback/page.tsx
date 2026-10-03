@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { LogoutOutlined } from '@ant-design/icons'
+import { useReadOnly } from '@/components/useReadOnly'
 import { Topbar } from '@/components/Topbar'
 import {
   BarChartOutlined,
@@ -55,6 +56,17 @@ export default function FeedbackPage() {
   const [statusFilter, setStatusFilter] = useState<string | undefined>()
   const [addOpen, setAddOpen] = useState(false)
   const [form] = Form.useForm()
+  const [messageApi, contextHolder] = message.useMessage()
+  const { isViewer, showReadOnly, contextHolder: readOnlyHolder } = useReadOnly()
+
+  // Returns true if the action may continue; shows the popup and returns false for viewers
+  const guardAction = () => {
+    if (isViewer) {
+      showReadOnly()
+      return false
+    }
+    return true
+  }
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
@@ -81,7 +93,8 @@ export default function FeedbackPage() {
     load()
   }, [load])
 
-   const updateStatus = async (id: string, newStatus: string) => {
+  const updateStatus = async (id: string, newStatus: string) => {
+    if (!guardAction()) return
     await fetch(`/api/feedback/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -91,11 +104,13 @@ export default function FeedbackPage() {
   }
 
   const deleteFeedback = async (id: string) => {
+    if (!guardAction()) return
     await fetch(`/api/feedback/${id}`, { method: 'DELETE' })
     load()
   }
 
   const addFeedback = async () => {
+    if (!guardAction()) return
     try {
       const values = await form.validateFields()
       const res = await fetch('/api/feedback', {
@@ -104,16 +119,20 @@ export default function FeedbackPage() {
         body: JSON.stringify(values),
       })
       if (!res.ok) throw new Error()
-      message.success('Feedback added')
+      messageApi.success('Feedback added')
       setAddOpen(false)
       form.resetFields()
       load()
     } catch {
-      message.error('Failed to add feedback')
+      messageApi.error('Failed to add feedback')
     }
   }
 
   const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!guardAction()) {
+      e.target.value = ''
+      return
+    }
     const file = e.target.files?.[0]
     if (!file) return
     const text = await file.text()
@@ -123,13 +142,15 @@ export default function FeedbackPage() {
       body: text,
     })
     const result = await res.json()
-    message.success(`Imported ${result.imported}, failed ${result.failed}`)
+    messageApi.success(`Imported ${result.imported}, failed ${result.failed}`)
     load()
     e.target.value = ''
   }
 
   return (
     <div className="app-shell">
+      {contextHolder}
+      {readOnlyHolder}
       <aside className="app-sidebar">
         <div className="app-logo">
           <Mark /> LOOP
@@ -153,7 +174,7 @@ export default function FeedbackPage() {
               <RadarChartOutlined /> Ask LOOP <Tag>AI</Tag>
             </button>
           </Link>
-                   <Link href="/reports">
+          <Link href="/reports">
             <button>
               <FileTextOutlined /> Reports
             </button>
@@ -179,22 +200,25 @@ export default function FeedbackPage() {
           </button>
         </nav>
         <div className="user-switch">
-  <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-    <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
-    <div>
-      <strong>{session?.user?.name}</strong>
-      <small>{session?.user?.role}</small>
-    </div>
-  </Link>
-  <LogoutOutlined
-    onClick={() => signOut({ callbackUrl: '/login' })}
-    style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
-    title="Log out"
-  />
-</div>
+          <Link
+            href="/profile"
+            style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}
+          >
+            <span>{session?.user?.name?.slice(0, 2).toUpperCase()}</span>
+            <div>
+              <strong>{session?.user?.name}</strong>
+              <small>{session?.user?.role}</small>
+            </div>
+          </Link>
+          <LogoutOutlined
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            style={{ cursor: 'pointer', color: '#647793', fontSize: 16 }}
+            title="Log out"
+          />
+        </div>
       </aside>
       <div className="app-main">
-       <Topbar />
+        <Topbar />
         <main className="feedback-content">
           <div className="feedback-heading">
             <div>
@@ -203,12 +227,20 @@ export default function FeedbackPage() {
             </div>
             <div>
               <label htmlFor="csv-upload">
-                <Button icon={<UploadOutlined />} onClick={() => document.getElementById('csv-upload')?.click()}>
+                <Button
+                  icon={<UploadOutlined />}
+                  onClick={() => guardAction() && document.getElementById('csv-upload')?.click()}
+                >
                   Import CSV
                 </Button>
               </label>
               <input id="csv-upload" type="file" accept=".csv" hidden onChange={importCSV} />
-              <Button type="primary" className="feedback-add" icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>
+              <Button
+                type="primary"
+                className="feedback-add"
+                icon={<PlusOutlined />}
+                onClick={() => guardAction() && setAddOpen(true)}
+              >
                 Add feedback
               </Button>
             </div>
@@ -272,7 +304,7 @@ export default function FeedbackPage() {
             <div className="feedback-meta">
               <span>{total} items</span>
             </div>
-                       <div className="feedback-grid feedback-header">
+            <div className="feedback-grid feedback-header">
               <span>FEEDBACK</span>
               <span>CHANNEL</span>
               <span>SENTIMENT</span>
@@ -290,16 +322,25 @@ export default function FeedbackPage() {
               items.map((row) => (
                 <div className="feedback-grid feedback-row" key={row.id}>
                   <div>
-                    <strong>{row.content.slice(0, 70)}{row.content.length > 70 ? '…' : ''}</strong>
+                    <strong>
+                      {row.content.slice(0, 70)}
+                      {row.content.length > 70 ? '…' : ''}
+                    </strong>
                   </div>
                   <span>{row.channel}</span>
                   <Tag
-  className={
-    row.sentiment === 'NEG' ? 'negative' : row.sentiment === 'POS' ? 'positive' : 'neutral'
-  }
->
-    {row.sentiment === 'NEG' ? 'NEGATIVE' : row.sentiment === 'POS' ? 'POSITIVE' : row.sentiment === 'NEU' ? 'NEUTRAL' : 'UNCLASSIFIED'}
-</Tag>
+                    className={
+                      row.sentiment === 'NEG' ? 'negative' : row.sentiment === 'POS' ? 'positive' : 'neutral'
+                    }
+                  >
+                    {row.sentiment === 'NEG'
+                      ? 'NEGATIVE'
+                      : row.sentiment === 'POS'
+                      ? 'POSITIVE'
+                      : row.sentiment === 'NEU'
+                      ? 'NEUTRAL'
+                      : 'UNCLASSIFIED'}
+                  </Tag>
                   <div className="theme-tags">
                     {row.themes.map((t) => (
                       <Tag key={t.theme.name}>{t.theme.name}</Tag>
@@ -316,7 +357,7 @@ export default function FeedbackPage() {
                       { value: 'ACTIONED', label: 'ACTIONED' },
                     ]}
                   />
-                                   <span>{new Date(row.createdAt).toLocaleDateString()}</span>
+                  <span>{new Date(row.createdAt).toLocaleDateString()}</span>
                   <Button danger size="small" onClick={() => deleteFeedback(row.id)}>
                     Delete
                   </Button>

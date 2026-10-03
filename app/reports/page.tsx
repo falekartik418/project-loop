@@ -6,6 +6,7 @@ import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { LogoutOutlined } from '@ant-design/icons'
 import { Topbar } from '@/components/Topbar'
+import { useReadOnly } from '@/components/useReadOnly'
 import {
   BarChartOutlined,
   BgColorsOutlined,
@@ -56,8 +57,7 @@ export default function ReportsPage() {
   const [generating, setGenerating] = useState(false)
   const [selected, setSelected] = useState<Report | null>(null)
   const [messageApi, contextHolder] = message.useMessage()
-
-  const canDelete = session?.user?.role !== 'VIEWER'
+  const { isViewer, showReadOnly, contextHolder: readOnlyHolder } = useReadOnly()
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
@@ -76,6 +76,10 @@ export default function ReportsPage() {
   }, [status])
 
   const generate = async () => {
+    if (isViewer) {
+      showReadOnly()
+      return
+    }
     setGenerating(true)
     const res = await fetch('/api/reports', {
       method: 'POST',
@@ -89,6 +93,10 @@ export default function ReportsPage() {
   }
 
   const deleteReport = async (id: string) => {
+    if (isViewer) {
+      showReadOnly()
+      return
+    }
     const res = await fetch(`/api/reports/${id}`, { method: 'DELETE' })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
@@ -100,13 +108,18 @@ export default function ReportsPage() {
   }
 
   const exportPdf = () => {
-    if (!selected) return
-    window.print()
+  if (!selected) return
+  if (isViewer) {
+    showReadOnly()
+    return
   }
+  window.print()
+}
 
   return (
     <div className="app-shell">
       {contextHolder}
+      {readOnlyHolder}
       <aside className="app-sidebar no-print">
         <div className="app-logo">
           <Mark /> LOOP
@@ -194,19 +207,18 @@ export default function ReportsPage() {
                   ← Back to all reports
                 </Button>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {canDelete && (
-                    <Popconfirm
-                      title="Delete this report?"
-                      description="This cannot be undone."
-                      okText="Delete"
-                      okButtonProps={{ danger: true }}
-                      onConfirm={() => deleteReport(selected.id)}
-                    >
-                      <Button danger icon={<DeleteOutlined />}>
-                        Delete
-                      </Button>
-                    </Popconfirm>
-                  )}
+                  <Popconfirm
+                    title="Delete this report?"
+                    description="This cannot be undone."
+                    okText="Delete"
+                    okButtonProps={{ danger: true }}
+                    disabled={isViewer}
+                    onConfirm={() => deleteReport(selected.id)}
+                  >
+                    <Button danger icon={<DeleteOutlined />} onClick={isViewer ? showReadOnly : undefined}>
+                      Delete
+                    </Button>
+                  </Popconfirm>
                   <Button icon={<DownloadOutlined />} onClick={exportPdf}>
                     Export PDF
                   </Button>
@@ -284,21 +296,20 @@ export default function ReportsPage() {
                         {new Date(r.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    {canDelete && (
-                      <span onClick={(e) => e.stopPropagation()}>
-                        <Popconfirm
-                          title="Delete this report?"
-                          description="This cannot be undone."
-                          okText="Delete"
-                          okButtonProps={{ danger: true }}
-                          onConfirm={() => deleteReport(r.id)}
-                        >
-                          <Button danger icon={<DeleteOutlined />}>
-                            Delete
-                          </Button>
-                        </Popconfirm>
-                      </span>
-                    )}
+                    <span onClick={(e) => e.stopPropagation()}>
+                      <Popconfirm
+                        title="Delete this report?"
+                        description="This cannot be undone."
+                        okText="Delete"
+                        okButtonProps={{ danger: true }}
+                        disabled={isViewer}
+                        onConfirm={() => deleteReport(r.id)}
+                      >
+                        <Button danger icon={<DeleteOutlined />} onClick={isViewer ? showReadOnly : undefined}>
+                          Delete
+                        </Button>
+                      </Popconfirm>
+                    </span>
                   </div>
                 </Card>
               ))}

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { requireSession } from '@/lib/guard'
+import { requireRole, requireSession } from '@/lib/guard'
 
 export async function GET() {
   const auth = await requireSession()
@@ -25,7 +25,8 @@ const updateSchema = z.object({
 })
 
 export async function PATCH(req: Request) {
-  const auth = await requireSession()
+  // Viewers (including the Demo Viewer) are read-only and cannot change profile data
+  const auth = await requireRole(['ADMIN', 'ANALYST'])
   if (auth instanceof NextResponse) return auth
   const { session } = auth
 

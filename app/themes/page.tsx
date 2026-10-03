@@ -6,6 +6,7 @@ import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { Button, Card, Input, Popconfirm, Tag, message } from 'antd'
 import { Topbar } from '@/components/Topbar'
+import { useReadOnly } from '@/components/useReadOnly'
 import {
   BarChartOutlined,
   BgColorsOutlined,
@@ -37,8 +38,8 @@ export default function ThemesPage() {
   const [description, setDescription] = useState('')
   const [color, setColor] = useState('#645df1')
   const [saving, setSaving] = useState(false)
-
-  const canEdit = session?.user?.role !== 'VIEWER'
+  const [messageApi, contextHolder] = message.useMessage()
+  const { isViewer, showReadOnly, contextHolder: readOnlyHolder } = useReadOnly()
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
@@ -56,7 +57,11 @@ export default function ThemesPage() {
   }, [status, load])
 
   const addTheme = async () => {
-    if (!name.trim()) return message.warning('Type a theme name first')
+    if (isViewer) {
+      showReadOnly()
+      return
+    }
+    if (!name.trim()) return messageApi.warning('Type a theme name first')
     setSaving(true)
     const res = await fetch('/api/themes', {
       method: 'POST',
@@ -65,17 +70,21 @@ export default function ThemesPage() {
     })
     const data = await res.json()
     setSaving(false)
-    if (!res.ok) return message.error(data.error ?? 'Something went wrong')
-    message.success(`"${name.trim()}" added`)
+    if (!res.ok) return messageApi.error(data.error ?? 'Something went wrong')
+    messageApi.success(`"${name.trim()}" added`)
     setName('')
     setDescription('')
     load()
   }
 
   const removeTheme = async (id: string) => {
+    if (isViewer) {
+      showReadOnly()
+      return
+    }
     const res = await fetch(`/api/themes/${id}`, { method: 'DELETE' })
-    if (!res.ok) return message.error('Could not delete theme')
-    message.success('Theme deleted')
+    if (!res.ok) return messageApi.error('Could not delete theme')
+    messageApi.success('Theme deleted')
     load()
   }
 
@@ -85,6 +94,8 @@ export default function ThemesPage() {
 
   return (
     <div className="app-shell">
+      {contextHolder}
+      {readOnlyHolder}
       <aside className="app-sidebar">
         <div className="app-logo">
           <span className="mark" aria-hidden="true">
@@ -168,36 +179,34 @@ export default function ThemesPage() {
             </div>
           </div>
 
-          {canEdit && (
-            <Card style={{ marginBottom: 24 }}>
-              <h3 style={{ marginTop: 0 }}>Add a new theme</h3>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-                <Input
-                  placeholder="Theme name (e.g. Customer Service)"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onPressEnter={addTheme}
-                  style={{ width: 260 }}
-                />
-                <Input
-                  placeholder="Short description (optional)"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  style={{ width: 300 }}
-                />
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  title="Theme color"
-                  style={{ width: 44, height: 32, border: 'none', background: 'none', cursor: 'pointer' }}
-                />
-                <Button type="primary" icon={<PlusOutlined />} loading={saving} onClick={addTheme}>
-                  Add theme
-                </Button>
-              </div>
-            </Card>
-          )}
+          <Card style={{ marginBottom: 24 }}>
+            <h3 style={{ marginTop: 0 }}>Add a new theme</h3>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Input
+                placeholder="Theme name (e.g. Customer Service)"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onPressEnter={addTheme}
+                style={{ width: 260 }}
+              />
+              <Input
+                placeholder="Short description (optional)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                style={{ width: 300 }}
+              />
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                title="Theme color"
+                style={{ width: 44, height: 32, border: 'none', background: 'none', cursor: 'pointer' }}
+              />
+              <Button type="primary" icon={<PlusOutlined />} loading={saving} onClick={addTheme}>
+                Add theme
+              </Button>
+            </div>
+          </Card>
 
           <h3>All themes ({themes.length})</h3>
           {themes.length === 0 ? (
@@ -217,17 +226,19 @@ export default function ThemesPage() {
                       }}
                     />
                     <strong style={{ fontSize: 15 }}>{t.name}</strong>
-                    {canEdit && (
-                      <Popconfirm
-                        title="Delete this theme?"
-                        description="It will be removed from all feedback."
-                        okText="Delete"
-                        okButtonProps={{ danger: true }}
-                        onConfirm={() => removeTheme(t.id)}
-                      >
-                        <DeleteOutlined style={{ marginLeft: 'auto', cursor: 'pointer', color: '#f2444d' }} />
-                      </Popconfirm>
-                    )}
+                    <Popconfirm
+                      title="Delete this theme?"
+                      description="It will be removed from all feedback."
+                      okText="Delete"
+                      okButtonProps={{ danger: true }}
+                      disabled={isViewer}
+                      onConfirm={() => removeTheme(t.id)}
+                    >
+                      <DeleteOutlined
+                        onClick={isViewer ? showReadOnly : undefined}
+                        style={{ marginLeft: 'auto', cursor: 'pointer', color: '#f2444d' }}
+                      />
+                    </Popconfirm>
                   </div>
                   <div style={{ fontSize: 13, color: '#647793', minHeight: 20 }}>{t.description || 'No description'}</div>
                   <div style={{ marginTop: 10, fontSize: 12 }}>

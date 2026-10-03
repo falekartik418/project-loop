@@ -21,7 +21,8 @@ const patchSchema = z.object({
 })
 
 export async function PATCH(req: Request) {
-  const auth = await requireSession()
+  // Viewers (including the Demo Viewer) are read-only and cannot change settings
+  const auth = await requireRole(['ADMIN', 'ANALYST'])
   if (auth instanceof NextResponse) return auth
   const { session } = auth
 

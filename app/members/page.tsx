@@ -6,6 +6,7 @@ import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { LogoutOutlined } from '@ant-design/icons'
 import { Topbar } from '@/components/Topbar'
+import { useReadOnly } from '@/components/useReadOnly'
 import {
   BarChartOutlined,
   BgColorsOutlined,
@@ -14,7 +15,6 @@ import {
   LineChartOutlined,
   PlusOutlined,
   RadarChartOutlined,
-  SearchOutlined,
   SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons'
@@ -45,6 +45,7 @@ export default function MembersPage() {
   const [addOpen, setAddOpen] = useState(false)
   const [form] = Form.useForm()
   const [messageApi, contextHolder] = message.useMessage()
+  const { showReadOnly, contextHolder: readOnlyHolder } = useReadOnly()
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
@@ -64,7 +65,17 @@ export default function MembersPage() {
 
   const isAdmin = session?.user?.role === 'ADMIN'
 
+  // Only admins can manage members. Everyone else sees the popup.
+  const guardAction = () => {
+    if (!isAdmin) {
+      showReadOnly()
+      return false
+    }
+    return true
+  }
+
   const changeRole = async (id: string, role: string) => {
+    if (!guardAction()) return
     const res = await fetch(`/api/workspace/members/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -80,6 +91,7 @@ export default function MembersPage() {
   }
 
   const removeMember = async (id: string) => {
+    if (!guardAction()) return
     const res = await fetch(`/api/workspace/members/${id}`, { method: 'DELETE' })
     if (!res.ok) {
       const data = await res.json()
@@ -91,6 +103,7 @@ export default function MembersPage() {
   }
 
   const invite = async () => {
+    if (!guardAction()) return
     try {
       const values = await form.validateFields()
       const res = await fetch('/api/workspace/members', {
@@ -115,6 +128,7 @@ export default function MembersPage() {
   return (
     <div className="app-shell">
       {contextHolder}
+      {readOnlyHolder}
       <aside className="app-sidebar">
         <div className="app-logo">
           <Mark /> LOOP
@@ -190,11 +204,13 @@ export default function MembersPage() {
               <h1>Members</h1>
               <p>Manage who has access to this workspace and their roles.</p>
             </div>
-            {isAdmin && (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>
-                Add member
-              </Button>
-            )}
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => guardAction() && setAddOpen(true)}
+            >
+              Add member
+            </Button>
           </div>
 
           <Card className="feedback-card">
@@ -202,7 +218,7 @@ export default function MembersPage() {
               <span>NAME</span>
               <span>EMAIL</span>
               <span>ROLE</span>
-              <span>{isAdmin ? 'ACTIONS' : ''}</span>
+              <span>ACTIONS</span>
             </div>
             {loading ? (
               <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>
@@ -215,24 +231,24 @@ export default function MembersPage() {
                 >
                   <strong>{m.name}</strong>
                   <span>{m.email}</span>
-                  {isAdmin ? (
-                    <Select
-                      size="small"
-                      value={m.role}
-                      onChange={(v) => changeRole(m.id, v)}
-                      disabled={m.id === session?.user?.id}
-                      options={[
-                        { value: 'ADMIN', label: 'ADMIN' },
-                        { value: 'ANALYST', label: 'ANALYST' },
-                        { value: 'VIEWER', label: 'VIEWER' },
-                      ]}
-                    />
-                  ) : (
-                    <Tag>{m.role}</Tag>
-                  )}
-                  {isAdmin && m.id !== session?.user?.id ? (
-                    <Popconfirm title="Remove this member?" onConfirm={() => removeMember(m.id)}>
-                      <Button danger size="small">
+                  <Select
+                    size="small"
+                    value={m.role}
+                    onChange={(v) => changeRole(m.id, v)}
+                    disabled={m.id === session?.user?.id}
+                    options={[
+                      { value: 'ADMIN', label: 'ADMIN' },
+                      { value: 'ANALYST', label: 'ANALYST' },
+                      { value: 'VIEWER', label: 'VIEWER' },
+                    ]}
+                  />
+                  {m.id !== session?.user?.id ? (
+                    <Popconfirm
+                      title="Remove this member?"
+                      disabled={!isAdmin}
+                      onConfirm={() => removeMember(m.id)}
+                    >
+                      <Button danger size="small" onClick={!isAdmin ? showReadOnly : undefined}>
                         Remove
                       </Button>
                     </Popconfirm>
@@ -254,7 +270,7 @@ export default function MembersPage() {
           <Form.Item label="Email" name="email" rules={[{ required: true, type: 'email' }]}>
             <Input />
           </Form.Item>
-          <Form.Item label="Temporary password" name="password" rules={[{ required: true, min: 8 }]}>
+          <Form.Item label="Temporary password" name="password" rules={[{ required: true, min: 6 }]}>
             <Input.Password />
           </Form.Item>
           <Form.Item label="Role" name="role" rules={[{ required: true }]} initialValue="VIEWER">
